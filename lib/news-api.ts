@@ -83,7 +83,14 @@ const NEWS_SOURCES = {
       category: "category",
       media: "media\\:content",
       enclosure: "enclosure",
-      imageSelectors: ["meta[property='og:image']", ".entry-content img", "img"],
+      // Use the same selectors as Punch for best compatibility
+      imageSelectors: [
+        ".entry-content img",
+        ".featured-image img",
+        "meta[property='og:image']",
+        ".wp-post-image",
+        "img"
+      ],
     },
     defaultImage: "/images/sources/vanguard-logo.png",
   },

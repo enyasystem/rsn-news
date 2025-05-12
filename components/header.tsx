@@ -53,25 +53,25 @@ export default function Header() {
       )}
     >
       {/* Top bar with logo and search */}
-      <div className="container mx-auto px-4">
-        <div className="flex h-16 items-center justify-between">
-          <div className="flex items-center">
-            <Link href="/" className="flex items-center">
-              <div className="flex items-center gap-2">
-                <Newspaper className={cn("h-6 w-6", isScrolled ? "text-[#CC0000]" : "text-white")} />
+      <div className="container mx-auto px-2 sm:px-4">
+        <div className="flex h-16 items-center justify-between flex-wrap gap-2 sm:gap-0 min-w-0">
+          <div className="flex items-center min-w-0 flex-shrink-0">
+            <Link href="/" className="flex items-center min-w-0">
+              <div className="flex items-center gap-2 min-w-0">
+                <Newspaper className={cn("h-6 w-6 flex-shrink-0", isScrolled ? "text-[#CC0000]" : "text-white")} />
                 <span
-                  className={cn("text-2xl font-bold", isScrolled ? "text-[#CC0000] dark:text-white" : "text-white")}
+                  className={cn("text-xl sm:text-2xl font-bold truncate", isScrolled ? "text-[#CC0000] dark:text-white" : "text-white")}
                 >
                   RSN NEWS
-                  <span className="block text-xs font-normal leading-tight text-gray-200 dark:text-gray-400">
-                    {/* Beyond Headlines - Your trusted source for Nigerian news and global updates */}
+                  <span className="block text-xs font-normal leading-tight text-gray-200 dark:text-gray-400 truncate max-w-[120px] sm:max-w-none">
+                    Beyond Headlines - Your trusted source for Nigerian news and global updates
                   </span>
                 </span>
               </div>
             </Link>
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 flex-shrink-0">
             <Button
               variant={isScrolled ? "ghost" : "secondary"}
               size="icon"
@@ -97,6 +97,7 @@ export default function Header() {
               <span className="sr-only">Toggle theme</span>
             </Button>
 
+            {/* Hamburger menu for mobile */}
             <Sheet>
               <SheetTrigger asChild>
                 <Button variant={isScrolled ? "ghost" : "secondary"} size="icon" className="md:hidden rounded-full">
@@ -104,7 +105,7 @@ export default function Header() {
                   <span className="sr-only">Toggle menu</span>
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+              <SheetContent side="right" className="w-[80vw] max-w-xs sm:w-[400px] p-0">
                 <div className="flex flex-col gap-6 mt-8">
                   <Link href="/" className="flex items-center gap-2 px-2 py-3 text-lg font-medium hover:text-[#CC0000]">
                     <Home className="h-5 w-5" />
@@ -164,16 +165,16 @@ export default function Header() {
 
         {showSearch && (
           <div className="py-3 border-t border-white/20">
-            <form onSubmit={handleSearch} className="flex gap-2">
+            <form onSubmit={handleSearch} className="flex gap-2 flex-col sm:flex-row">
               <Input
                 type="search"
                 placeholder="Search news..."
-                className="flex-1 bg-white/20 border-white/20 placeholder:text-white/70 text-white h-10"
+                className="flex-1 bg-white/20 border-white/20 placeholder:text-white/70 text-white h-10 min-w-0"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 autoFocus
               />
-              <Button type="submit" variant="secondary" className="h-10">
+              <Button type="submit" variant="secondary" className="h-10 w-full sm:w-auto">
                 Search
               </Button>
             </form>
@@ -188,38 +189,43 @@ export default function Header() {
           isScrolled ? "border-b border-gray-200 dark:border-gray-800" : "",
         )}
       >
-        <div className="container mx-auto px-4">
-          <nav className="hidden md:flex items-center justify-between">
-            <div className="flex items-center space-x-1">
+        <div className="container mx-auto px-2 sm:px-4">
+          {/* Responsive nav: always visible, scrollable on mobile */}
+          <nav
+            className={cn(
+              "flex items-center gap-2 overflow-x-auto flex-nowrap md:justify-between md:overflow-visible scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent"
+            )}
+            style={{ WebkitOverflowScrolling: 'touch' }}
+            aria-label="Main navigation"
+          >
+            <div className="flex items-center gap-1 flex-nowrap min-w-0">
               <Link
                 href="/"
-                className="px-3 py-2 text-sm font-medium rounded-md transition-colors hover:bg-white/10 text-white"
+                className="px-3 py-2 text-sm font-medium rounded-md transition-colors hover:bg-white/10 text-white whitespace-nowrap"
               >
                 <Home className="h-4 w-4 inline-block mr-1" />
                 Home
               </Link>
               <Link
                 href="/trending"
-                className="px-3 py-2 text-sm font-medium rounded-md transition-colors hover:bg-white/10 text-white"
+                className="px-3 py-2 text-sm font-medium rounded-md transition-colors hover:bg-white/10 text-white whitespace-nowrap"
               >
                 <TrendingUp className="h-4 w-4 inline-block mr-1" />
                 Trending
               </Link>
               <Link
                 href="/latest"
-                className="px-3 py-2 text-sm font-medium rounded-md transition-colors hover:bg-white/10 text-white"
+                className="px-3 py-2 text-sm font-medium rounded-md transition-colors hover:bg-white/10 text-white whitespace-nowrap"
               >
                 <Newspaper className="h-4 w-4 inline-block mr-1" />
                 Latest
               </Link>
-            </div>
-
-            <div className="flex items-center space-x-1">
+              {/* Categories: scrollable on mobile */}
               {categories.map((category) => (
                 <Link
                   key={category.name}
                   href={category.href}
-                  className="px-3 py-2 text-sm font-medium rounded-md transition-colors hover:bg-white/10 text-white"
+                  className="px-3 py-2 text-sm font-medium rounded-md transition-colors hover:bg-white/10 text-white whitespace-nowrap"
                 >
                   {category.name}
                 </Link>
