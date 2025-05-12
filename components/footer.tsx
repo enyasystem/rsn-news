@@ -35,12 +35,12 @@ export default function Footer() {
           <div>
             <div className="flex items-center gap-2 mb-4">
               <div className="bg-white p-1 rounded">
-                <div className="text-[#CC0000] font-bold text-xl">NN</div>
+                <div className="text-[#CC0000] font-bold text-xl">RSN</div>
               </div>
-              <h3 className="text-xl font-bold">NigeriaNews</h3>
+              <h3 className="text-xl font-bold">RSN NEWS</h3>
             </div>
             <p className="text-sm text-gray-300 mb-4">
-              Your trusted source for the latest Nigerian news from top publications.
+              RSN NEWS - Beyond Headlines - Your trusted source for Nigerian news and global updates.
             </p>
             <div className="flex space-x-3">
               <Button
@@ -214,7 +214,7 @@ export default function Footer() {
         </div>
 
         <div className="mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-gray-800 text-center">
-          <p className="text-sm text-gray-400">© {new Date().getFullYear()} NigeriaNews. All rights reserved.</p>
+          <p className="text-sm text-gray-400">© {new Date().getFullYear()} RSN NEWS. All rights reserved.</p>
         </div>
       </div>
     </footer>

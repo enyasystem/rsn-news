@@ -62,7 +62,10 @@ export default function Header() {
                 <span
                   className={cn("text-2xl font-bold", isScrolled ? "text-[#CC0000] dark:text-white" : "text-white")}
                 >
-                  NigeriaNews
+                  RSN NEWS
+                  <span className="block text-xs font-normal leading-tight text-gray-200 dark:text-gray-400">
+                    Beyond Headlines - Your trusted source for Nigerian news and global updates
+                  </span>
                 </span>
               </div>
             </Link>
