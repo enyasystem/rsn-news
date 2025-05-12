@@ -8,9 +8,9 @@ import "./globals.css"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata = {
-  title: "Nigerian News Aggregator",
-  description: "Top Nigerian news from trusted sources",
-    generator: 'v0.dev'
+  title: "RSN NEWS",
+  description: "Beyond Headlines - Your trusted source for Nigerian news and global updates",
+    // generator: 'v0.dev'
 }
 
 export default function RootLayout({

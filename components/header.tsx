@@ -64,7 +64,7 @@ export default function Header() {
                 >
                   RSN NEWS
                   <span className="block text-xs font-normal leading-tight text-gray-200 dark:text-gray-400">
-                    Beyond Headlines - Your trusted source for Nigerian news and global updates
+                    {/* Beyond Headlines - Your trusted source for Nigerian news and global updates */}
                   </span>
                 </span>
               </div>
