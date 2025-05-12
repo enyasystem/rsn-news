@@ -58,14 +58,11 @@ export default function Header() {
           <div className="flex items-center min-w-0 flex-shrink-0">
             <Link href="/" className="flex items-center min-w-0">
               <div className="flex items-center gap-2 min-w-0">
-                <Newspaper className={cn("h-6 w-6 flex-shrink-0", isScrolled ? "text-[#CC0000]" : "text-white")} />
+                <img src="RSN NEWS.jpg" alt="RSN Logo" className="h-12 w-12 object-contain rounded-full bg-white p-1 shadow-sm mr-1" />
                 <span
                   className={cn("text-xl sm:text-2xl font-bold truncate", isScrolled ? "text-[#CC0000] dark:text-white" : "text-white")}
                 >
                   RSN NEWS
-                  <span className="block text-xs font-normal leading-tight text-gray-200 dark:text-gray-400 truncate max-w-[120px] sm:max-w-none">
-                    Beyond Headlines - Your trusted source for Nigerian news and global updates
-                  </span>
                 </span>
               </div>
             </Link>

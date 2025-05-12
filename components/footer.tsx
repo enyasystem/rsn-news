@@ -34,9 +34,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           <div className="min-w-0">
             <div className="flex items-center gap-2 mb-4">
-              <div className="bg-white p-1 rounded">
-                <div className="text-[#CC0000] font-bold text-xl">RSN</div>
-              </div>
+              <img src="RSN NEWS.jpg" alt="RSN Logo" className="h-8 w-8 object-contain rounded-full bg-white p-1 shadow-sm mr-1" />
               <h3 className="text-xl font-bold whitespace-nowrap">RSN NEWS</h3>
             </div>
             <p className="text-sm text-gray-300 mb-4 break-words">

@@ -2,6 +2,7 @@ import { parse } from "node-html-parser"
 import { decode } from "html-entities"
 import { cleanContent, htmlToPlainText } from "@/lib/utils"
 import * as cheerio from "cheerio"
+import { XMLParser } from "fast-xml-parser"
 
 // Types for our news data
 export interface NewsArticle {
@@ -464,7 +465,11 @@ async function searchImageByHeadline(headline: string, source: string, unique?: 
   } catch (error) {
     console.error("Error searching for image:", error)
   }
-  // Return source default image if search fails
+  // Always return Vanguard logo if source is vanguard
+  if (source === "vanguard") {
+    return "/images/sources/vanguard-logo.png"
+  }
+  // Otherwise, fallback to source default image or placeholder
   return NEWS_SOURCES[source as keyof typeof NEWS_SOURCES]?.defaultImage || "/placeholder.svg"
 }
 
@@ -533,6 +538,9 @@ async function extractImageFromRssItem(
     }
   }
   // 4. Fallback: Use Unsplash or default logo
+  if (source === "vanguard") {
+    return "/images/sources/vanguard-logo.png"
+  }
   return await searchImageByHeadline(title, source, title)
 }
 
@@ -608,131 +616,82 @@ async function parseRSSFeed(source: string): Promise<NewsArticle[]> {
     const response = await fetchWithFallback(sourceConfig.rssUrls)
     const xmlText = await response.text()
 
-    // Check if the response is valid XML
-    if (!xmlText.trim().startsWith("<?xml") && !xmlText.trim().startsWith("<rss")) {
-      console.error(`Invalid XML response from ${sourceConfig.name}:`, xmlText.substring(0, 100))
-      throw new Error(`Invalid XML response from ${sourceConfig.name}`)
-    }
+    // Use fast-xml-parser for robust XML parsing
+    const parser = new XMLParser({
+      ignoreAttributes: false,
+      attributeNamePrefix: "@_",
+      parseTagValue: true,
+      parseAttributeValue: true,
+      trimValues: true,
+    })
+    const parsed = parser.parse(xmlText)
 
-    const root = parse(xmlText)
-    const items = root.querySelectorAll(sourceConfig.selectors.articles)
+    // Find the channel/item array in a robust way
+    let items: any[] = []
+    if (parsed.rss && parsed.rss.channel && parsed.rss.channel.item) {
+      items = Array.isArray(parsed.rss.channel.item) ? parsed.rss.channel.item : [parsed.rss.channel.item]
+    } else if (parsed.feed && parsed.feed.entry) {
+      // Atom feed fallback
+      items = Array.isArray(parsed.feed.entry) ? parsed.feed.entry : [parsed.feed.entry]
+    }
 
     if (items.length === 0) {
       console.warn(`No articles found in RSS feed for ${sourceConfig.name}`)
-      return [] // Return empty array instead of mock articles
+      return []
     }
 
-    // Process items in parallel for better performance
-    const articlePromises = items.map(async (item, index) => {
-      const title = item.querySelector(sourceConfig.selectors.title)?.textContent || "Untitled"
-      // --- Improved link extraction logic ---
-      let rawLink = item.querySelector(sourceConfig.selectors.link)?.textContent?.trim() || ""
-      // If <link> is empty, try <guid> if it looks like a URL
-      if (!rawLink) {
-        const guid = item.querySelector("guid")?.textContent?.trim() || ""
-        if (/^https?:\/\//i.test(guid)) {
-          rawLink = guid
-        }
-      }
-      // If still empty, try <enclosure url="...">
-      if (!rawLink) {
-        const enclosureUrl = item.querySelector("enclosure")?.getAttribute("url") || ""
-        if (/^https?:\/\//i.test(enclosureUrl)) {
-          rawLink = enclosureUrl
-        }
-      }
-      // Always resolve the link to an absolute URL using the source base URL
+    // Map XML items to NewsArticle objects
+    const articlePromises = items.map(async (item: any, index: number) => {
+      const title = item.title || "Untitled"
+      let rawLink = item.link && typeof item.link === "string" ? item.link : (item.link && item.link["@_href"]) || ""
+      if (!rawLink && item.guid && /^https?:\/\//i.test(item.guid)) rawLink = item.guid
+      if (!rawLink && item.enclosure && item.enclosure["@_url"]) rawLink = item.enclosure["@_url"]
       let sourceUrl = getAbsoluteUrl(rawLink, sourceConfig.url)
-      // Only use canonical/og:url if it is a subpath of the original link and not the homepage
       let canonicalUrl = sourceUrl
       if (sourceUrl && sourceUrl !== sourceConfig.url) {
         const fetchedCanonical = await fetchCanonicalUrl(sourceUrl)
-        // Only use canonical if it is not the homepage and contains a path (likely an article)
         if (
           fetchedCanonical &&
           /^https?:\/\//i.test(fetchedCanonical) &&
           ![sourceConfig.url, sourceConfig.url + "/", sourceConfig.url.replace(/\/$/, "")].includes(fetchedCanonical.replace(/\/$/, "")) &&
-          fetchedCanonical.replace(sourceConfig.url, "").length > 1 // must have a path after domain
+          fetchedCanonical.replace(sourceConfig.url, "").length > 1
         ) {
           canonicalUrl = fetchedCanonical
         }
       }
-      // If the resolved URL is not valid, fallback to the original RSS link (not homepage)
-      if (!canonicalUrl || !/^https?:\/\//i.test(canonicalUrl)) {
-        canonicalUrl = sourceUrl
-      }
-      // If still not a valid article link, fallback to homepage as last resort
-      if (!canonicalUrl || canonicalUrl === sourceConfig.url || canonicalUrl === sourceConfig.url + "/") {
-        canonicalUrl = ""
-      }
-      // Extract image with enhanced methods, always pass the resolved article URL
-      const imageUrl = await extractImageFromRssItem(item, sourceConfig, title, source, canonicalUrl)
-      const description = htmlToPlainText(item.querySelector(sourceConfig.selectors.description)?.textContent || "")
-      const pubDateStr = item.querySelector(sourceConfig.selectors.pubDate)?.textContent || ""
-      let publishedAt = new Date().toISOString() // Default to current date if parsing fails
-
-      // Clean content from CDATA tags
-      const content = cleanContent(item.querySelector(sourceConfig.selectors.content)?.textContent || "")
-
+      if (!canonicalUrl || !/^https?:\/\//i.test(canonicalUrl)) canonicalUrl = sourceUrl
+      if (!canonicalUrl || canonicalUrl === sourceConfig.url || canonicalUrl === sourceConfig.url + "/") canonicalUrl = ""
+      // Description/content
+      const description = htmlToPlainText(item.description || item.summary || "")
+      const content = cleanContent(item["content:encoded"] || item.content || "")
+      // Date
+      const pubDateStr = item.pubDate || item.published || item.updated || ""
+      let publishedAt = new Date().toISOString()
       try {
-        // Try to parse the date string
         const parsedDate = new Date(pubDateStr)
-
-        // Check if the date is valid
-        if (!isNaN(parsedDate.getTime())) {
-          publishedAt = parsedDate.toISOString()
-        } else {
-          // Try alternative date formats
-          // RFC 822 format (common in RSS)
-          const rfc822Match = pubDateStr.match(/(\d{1,2}) ([A-Za-z]{3}) (\d{4}) (\d{2}):(\d{2}):(\d{2})/)
-          if (rfc822Match) {
-            const [, day, month, year, hours, minutes, seconds] = rfc822Match
-            const monthMap: Record<string, number> = {
-              Jan: 0,
-              Feb: 1,
-              Mar: 2,
-              Apr: 3,
-              May: 4,
-              Jun: 5,
-              Jul: 6,
-              Aug: 7,
-              Sep: 8,
-              Oct: 9,
-              Nov: 10,
-              Dec: 11,
-            }
-            const parsedDate = new Date(
-              Number.parseInt(year),
-              monthMap[month] || 0,
-              Number.parseInt(day),
-              Number.parseInt(hours),
-              Number.parseInt(minutes),
-              Number.parseInt(seconds),
-            )
-            if (!isNaN(parsedDate.getTime())) {
-              publishedAt = parsedDate.toISOString()
-            }
-          }
-        }
-      } catch (error) {
-        console.error(`Error parsing date "${pubDateStr}" from ${sourceConfig.name}:`, error)
-        // Keep using the default date
+        if (!isNaN(parsedDate.getTime())) publishedAt = parsedDate.toISOString()
+      } catch {}
+      // Categories
+      let categories: string[] = []
+      if (item.category) {
+        if (Array.isArray(item.category)) categories = item.category.map((c: any) => (typeof c === "string" ? c : c["#text"] || c["@_term"] || ""))
+        else categories = [typeof item.category === "string" ? item.category : item.category["#text"] || item.category["@_term"] || ""]
       }
-
-      const categories = item.querySelectorAll(sourceConfig.selectors.category).map((cat) => cat.textContent)
-
-      // Generate a unique ID for this article
+      // Image
+      let imageUrl = sourceConfig.defaultImage
+      if (item["media:content"] && item["media:content"]["@_url"]) imageUrl = item["media:content"]["@_url"]
+      else if (item.enclosure && item.enclosure["@_url"]) imageUrl = item.enclosure["@_url"]
+      // Fallback: try to extract from content/description
+      if (!imageUrl || imageUrl === sourceConfig.defaultImage) {
+        const imgMatch = (item["content:encoded"] || item.content || item.description || "").match(/<img[^>]+src=["']([^"'>]+)["']/i)
+        if (imgMatch && imgMatch[1]) imageUrl = imgMatch[1]
+      }
+      // Final fallback
+      if (!imageUrl) imageUrl = sourceConfig.defaultImage
+      // Unique ID
       const uniqueId = `${source}-${index}-${Date.now()}`
-
-      // Debug log: print the link and sourceUrl for each article
-      console.log(`[NEWS DEBUG] Source: ${sourceConfig.name} | Title: ${title} | link: ${rawLink} | sourceUrl: ${canonicalUrl}`)
-
-      // Log the image URL for debugging
-      console.log(`[NEWS DEBUG] Source: ${sourceConfig.name} | Title: ${title} | ImageURL: ${imageUrl}`)
-
       const category = determineCategory(categories)
       const slug = createSlug(title, uniqueId)
-
       return {
         id: uniqueId,
         title,
@@ -742,16 +701,13 @@ async function parseRSSFeed(source: string): Promise<NewsArticle[]> {
         imageUrl,
         category,
         source: sourceConfig.name,
-        sourceUrl: canonicalUrl, // Always the best possible article link (by id/path)
+        sourceUrl: canonicalUrl,
         publishedAt,
       }
     })
-
     return await Promise.all(articlePromises)
   } catch (error) {
     console.error(`Error fetching from ${sourceConfig.name}:`, error)
-
-    // Return empty array instead of mock articles
     return []
   }
 }
