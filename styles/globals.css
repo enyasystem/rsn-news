@@ -10,6 +10,13 @@ body {
   .text-balance {
     text-wrap: balance;
   }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 #ff000080; }
+    50% { opacity: 0.7; box-shadow: 0 0 0 8px #ff000040; }
+  }
+  .animate-pulse {
+    animation: pulse 1.5s infinite;
+  }
 }
 
 @layer base {

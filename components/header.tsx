@@ -69,6 +69,29 @@ export default function Header() {
           </div>
 
           <div className="flex items-center space-x-2 flex-shrink-0">
+            {/* Watch Live Button - Header */}
+            <a
+              href="https://www.youtube.com/@RSNEWSONLINE"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden sm:block"
+            >
+              <Button
+                variant="destructive"
+                className={cn(
+                  "animate-pulse bg-[#FF0000] hover:bg-[#CC0000] text-white font-bold px-4 py-2 flex items-center gap-2 border-2 border-white shadow-lg transition-all duration-300",
+                  isScrolled ? "ring-2 ring-[#FF0000]" : ""
+                )}
+                style={{
+                  animation: 'pulse 1.5s infinite',
+                }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" className="h-5 w-5">
+                  <path d="M21.8 8.001a2.75 2.75 0 0 0-1.94-1.94C18.2 6 12 6 12 6s-6.2 0-7.86.06A2.75 2.75 0 0 0 2.2 8.001 28.6 28.6 0 0 0 2 12a28.6 28.6 0 0 0 .2 3.999 2.75 2.75 0 0 0 1.94 1.94C5.8 18 12 18 12 18s6.2 0 7.86-.06a2.75 2.75 0 0 0 1.94-1.94A28.6 28.6 0 0 0 22 12a28.6 28.6 0 0 0-.2-3.999zM10 15.5v-7l6 3.5-6 3.5z" />
+                </svg>
+                <span className="tracking-wide">Watch Live</span>
+              </Button>
+            </a>
             <Button
               variant={isScrolled ? "ghost" : "secondary"}
               size="icon"

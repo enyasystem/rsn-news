@@ -179,6 +179,24 @@ export default function Footer() {
           </div>
 
           <div className="mt-6 sm:mt-0 min-w-0">
+            <h4 className="text-md font-semibold mb-4 text-gray-100">Watch Live</h4>
+            <a
+              href="https://www.youtube.com/@RSNEWSONLINE"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block w-full mb-4"
+            >
+              <Button
+                variant="destructive"
+                className="w-full flex items-center justify-center gap-2 text-lg font-semibold py-2"
+              >
+                <Youtube className="h-5 w-5" />
+                Watch RSN Live
+              </Button>
+            </a>
+          </div>
+
+          <div className="mt-6 sm:mt-0 min-w-0">
             <h4 className="text-md font-semibold mb-4 text-gray-100">Contact Us</h4>
             <ul className="space-y-3">
               <li className="flex items-start">
