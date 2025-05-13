@@ -642,7 +642,8 @@ async function parseRSSFeed(source: string): Promise<NewsArticle[]> {
 
     // Map XML items to NewsArticle objects
     const articlePromises = items.map(async (item: any, index: number) => {
-      const title = item.title || "Untitled"
+      // Decode HTML entities in title and description
+      const title = decode(item.title || "Untitled")
       let rawLink = item.link && typeof item.link === "string" ? item.link : (item.link && item.link["@_href"]) || ""
       if (!rawLink && item.guid && /^https?:\/\//i.test(item.guid)) rawLink = item.guid
       if (!rawLink && item.enclosure && item.enclosure["@_url"]) rawLink = item.enclosure["@_url"]
@@ -662,7 +663,7 @@ async function parseRSSFeed(source: string): Promise<NewsArticle[]> {
       if (!canonicalUrl || !/^https?:\/\//i.test(canonicalUrl)) canonicalUrl = sourceUrl
       if (!canonicalUrl || canonicalUrl === sourceConfig.url || canonicalUrl === sourceConfig.url + "/") canonicalUrl = ""
       // Description/content
-      const description = htmlToPlainText(item.description || item.summary || "")
+      const description = decode(htmlToPlainText(item.description || item.summary || ""))
       const content = cleanContent(item["content:encoded"] || item.content || "")
       // Date
       const pubDateStr = item.pubDate || item.published || item.updated || ""
