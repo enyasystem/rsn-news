@@ -36,19 +36,27 @@ const NEWS_SOURCES = {
   punch: {
     name: "Punch",
     url: "https://punchng.com",
-    rssUrls: ["https://punchng.com/feed/", "https://punchng.com/rss/", "https://www.punchng.com/feed/"],
+    rssUrls: [
+      "https://punchng.com/feed/", 
+      "https://www.punchng.com/feed/", 
+      "https://punchng.com/rss/"
+    ],
     selectors: {
       articles: "item",
       title: "title",
       link: "link",
       description: "description",
       pubDate: "pubDate",
-      content: "content\\:encoded",
+      content: "content:encoded",
       category: "category",
-      media: "media\\:content",
+      media: "media:content",
       enclosure: "enclosure",
-      // Source-specific image selectors for direct scraping
-      imageSelectors: [".entry-content img", ".featured-image img", "meta[property='og:image']"],
+      imageSelectors: [
+        ".entry-content img",
+        ".featured-image img",
+        "meta[property='og:image']",
+        "img"
+      ],
     },
     defaultImage: "/images/sources/punch-logo.png",
   },
@@ -98,18 +106,26 @@ const NEWS_SOURCES = {
   channelstv: {
     name: "Channels TV",
     url: "https://channelstv.com",
-    rssUrls: ["https://www.channelstv.com/feed/", "https://channelstv.com/feed/"],
+    rssUrls: [
+      "https://www.channelstv.com/feed/",
+      "https://channelstv.com/feed/"
+    ],
     selectors: {
       articles: "item",
       title: "title",
       link: "link",
       description: "description",
       pubDate: "pubDate",
-      content: "content\\:encoded",
+      content: "content:encoded",
       category: "category",
-      media: "media\\:content",
+      media: "media:content",
       enclosure: "enclosure",
-      imageSelectors: [".featured-image img", ".entry-content img", "meta[property='og:image']"],
+      imageSelectors: [
+        ".featured-image img",
+        ".entry-content img",
+        "meta[property='og:image']",
+        "img"
+      ],
     },
     defaultImage: "/images/sources/channelstv-logo.png",
   },
@@ -131,24 +147,24 @@ const NEWS_SOURCES = {
     },
     defaultImage: "/images/sources/premiumtimes-logo.png",
   },
-  thecable: {
-    name: "The Cable",
-    url: "https://www.thecable.ng",
-    rssUrls: ["https://www.thecable.ng/feed"],
-    selectors: {
-      articles: "item",
-      title: "title",
-      link: "link",
-      description: "description",
-      pubDate: "pubDate",
-      content: "content:encoded",
-      category: "category",
-      media: "media:content",
-      enclosure: "enclosure",
-      imageSelectors: ["meta[property='og:image']", ".entry-content img", "img"],
-    },
-    defaultImage: "/images/sources/thecable-logo.png",
-  },
+  // thecable: {
+  //   name: "The Cable",
+  //   url: "https://www.thecable.ng",
+  //   rssUrls: ["https://www.thecable.ng/feed"],
+  //   selectors: {
+  //     articles: "item",
+  //     title: "title",
+  //     link: "link",
+  //     description: "description",
+  //     pubDate: "pubDate",
+  //     content: "content:encoded",
+  //     category: "category",
+  //     media: "media:content",
+  //     enclosure: "enclosure",
+  //     imageSelectors: ["meta[property='og:image']", ".entry-content img", "img"],
+  //   },
+  //   defaultImage: "/images/sources/thecable-logo.png",
+  // },
   dailytrust: {
     name: "Daily Trust",
     url: "https://dailytrust.com",
@@ -167,24 +183,31 @@ const NEWS_SOURCES = {
     },
     defaultImage: "/images/sources/dailytrust-logo.png",
   },
-  thisday: {
-    name: "ThisDay",
-    url: "https://www.thisdaylive.com",
-    rssUrls: ["https://www.thisdaylive.com/feed/"],
-    selectors: {
-      articles: "item",
-      title: "title",
-      link: "link",
-      description: "description",
-      pubDate: "pubDate",
-      content: "content:encoded",
-      category: "category",
-      media: "media:content",
-      enclosure: "enclosure",
-      imageSelectors: ["meta[property='og:image']", ".entry-content img", "img"],
-    },
-    defaultImage: "/images/sources/thisday-logo.png",
-  },
+  // thisday: {
+  //   name: "ThisDay",
+  //   url: "https://www.thisdaylive.com",
+  //   rssUrls: [
+  //     "https://www.thisdaylive.com/feed/",
+  //     "https://thisdaylive.com/feed/"
+  //   ],
+  //   selectors: {
+  //     articles: "item",
+  //     title: "title",
+  //     link: "link",
+  //     description: "description",
+  //     pubDate: "pubDate",
+  //     content: "content:encoded",
+  //     category: "category",
+  //     media: "media:content",
+  //     enclosure: "enclosure",
+  //     imageSelectors: [
+  //       "meta[property='og:image']",
+  //       ".entry-content img",
+  //       "img"
+  //     ],
+  //   },
+  //   defaultImage: "/images/sources/thisday-logo.png",
+  // },
   saharareporters: {
     name: "Sahara Reporters",
     url: "https://saharareporters.com",
@@ -686,6 +709,14 @@ async function parseRSSFeed(source: string): Promise<NewsArticle[]> {
       if (!imageUrl || imageUrl === sourceConfig.defaultImage) {
         const imgMatch = (item["content:encoded"] || item.content || item.description || "").match(/<img[^>]+src=["']([^"'>]+)["']/i)
         if (imgMatch && imgMatch[1]) imageUrl = imgMatch[1]
+      }
+      // Special fallback for Daily Trust: look for enclosure.url (not @_url) or og:image in description
+      if (source === "dailytrust") {
+        if (item.enclosure && item.enclosure.url) imageUrl = item.enclosure.url
+        if (!imageUrl || imageUrl === sourceConfig.defaultImage) {
+          const ogImgMatch = (item.description || "").match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
+          if (ogImgMatch && ogImgMatch[1]) imageUrl = ogImgMatch[1]
+        }
       }
       // Final fallback
       if (!imageUrl) imageUrl = sourceConfig.defaultImage
