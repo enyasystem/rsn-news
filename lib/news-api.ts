@@ -103,32 +103,32 @@ const NEWS_SOURCES = {
     },
     defaultImage: "/images/sources/vanguard-logo.png",
   },
-  channelstv: {
-    name: "Channels TV",
-    url: "https://channelstv.com",
-    rssUrls: [
-      "https://www.channelstv.com/feed/",
-      "https://channelstv.com/feed/"
-    ],
-    selectors: {
-      articles: "item",
-      title: "title",
-      link: "link",
-      description: "description",
-      pubDate: "pubDate",
-      content: "content:encoded",
-      category: "category",
-      media: "media:content",
-      enclosure: "enclosure",
-      imageSelectors: [
-        ".featured-image img",
-        ".entry-content img",
-        "meta[property='og:image']",
-        "img"
-      ],
-    },
-    defaultImage: "/images/sources/channelstv-logo.png",
-  },
+  // channelstv: {
+  //   name: "Channels TV",
+  //   url: "https://channelstv.com",
+  //   rssUrls: [
+  //     "https://www.channelstv.com/feed/",
+  //     "https://channelstv.com/feed/"
+  //   ],
+  //   selectors: {
+  //     articles: "item",
+  //     title: "title",
+  //     link: "link",
+  //     description: "description",
+  //     pubDate: "pubDate",
+  //     content: "content:encoded",
+  //     category: "category",
+  //     media: "media:content",
+  //     enclosure: "enclosure",
+  //     imageSelectors: [
+  //       ".featured-image img",
+  //       ".entry-content img",
+  //       "meta[property='og:image']",
+  //       "img"
+  //     ],
+  //   },
+  //   defaultImage: "/images/sources/channelstv-logo.png",
+  // },
   premiumtimes: {
     name: "Premium Times",
     url: "https://www.premiumtimesng.com",
@@ -226,6 +226,83 @@ const NEWS_SOURCES = {
     },
     defaultImage: "/images/sources/saharareporters-logo.png",
   },
+  bbcpigin: {
+    name: "BBC Pidgin",
+    url: "https://www.bbc.com/pidgin",
+    rssUrls: ["https://feeds.bbci.co.uk/pidgin/rss.xml"],
+    selectors: {
+      articles: "item",
+      title: "title",
+      link: "link",
+      description: "description",
+      pubDate: "pubDate",
+      content: "content:encoded",
+      category: "category",
+      media: "media:content",
+      enclosure: "enclosure",
+      imageSelectors: [
+        "media:thumbnail",
+        "media:content",
+        "meta[property='og:image']",
+        "img"
+      ],
+    },
+    defaultImage: "/images/sources/bbcpidgin-logo.png",
+  },
+  // techcrunch: {
+  //   name: "TechCrunch Africa",
+  //   url: "https://techcrunch.com/",
+  //   rssUrls: ["https://techcrunch.com/feed/"],
+  //   selectors: {
+  //     articles: "item",
+  //     title: "title",
+  //     link: "link",
+  //     description: "description",
+  //     pubDate: "pubDate",
+  //     content: "content:encoded",
+  //     category: "category",
+  //     media: "media:content",
+  //     enclosure: "enclosure",
+  //     imageSelectors: ["meta[property='og:image']", "img"],
+  //   },
+  //   defaultImage: "/images/sources/techcrunch-logo.png",
+  // },
+  // techcabal: {
+  //   name: "TechCabal",
+  //   url: "https://techcabal.com/",
+  //   rssUrls: ["https://techcabal.com/feed/"],
+  //   selectors: {
+  //     articles: "item",
+  //     title: "title",
+  //     link: "link",
+  //     description: "description",
+  //     pubDate: "pubDate",
+  //     content: "content:encoded",
+  //     category: "category",
+  //     media: "media:content",
+  //     enclosure: "enclosure",
+  //     imageSelectors: ["meta[property='og:image']", "img"],
+  //   },
+  //   defaultImage: "/images/sources/techcabal-logo.png",
+  // },
+  // cnn: {
+  //   name: "CNN Africa",
+  //   url: "https://edition.cnn.com/world/africa/nigeria",
+  //   rssUrls: ["http://rss.cnn.com/rss/edition_africa.rss"],
+  //   selectors: {
+  //     articles: "item",
+  //     title: "title",
+  //     link: "link",
+  //     description: "description",
+  //     pubDate: "pubDate",
+  //     content: "content:encoded",
+  //     category: "category",
+  //     media: "media:content",
+  //     enclosure: "enclosure",
+  //     imageSelectors: ["meta[property='og:image']", "img"],
+  //   },
+  //   defaultImage: "/images/sources/cnn-logo.png",
+  // },
 }
 
 // Cache mechanism to reduce API calls
@@ -703,6 +780,14 @@ async function parseRSSFeed(source: string): Promise<NewsArticle[]> {
       }
       // Image
       let imageUrl = sourceConfig.defaultImage
+      // --- BBC Pidgin: Try media:thumbnail and media:content for image extraction ---
+      if (source === "bbcpigin") {
+        if (item["media:thumbnail"] && item["media:thumbnail"]["@_url"]) {
+          imageUrl = item["media:thumbnail"]["@_url"]
+        } else if (item["media:content"] && item["media:content"]["@_url"]) {
+          imageUrl = item["media:content"]["@_url"]
+        }
+      }
       if (item["media:content"] && item["media:content"]["@_url"]) imageUrl = item["media:content"]["@_url"]
       else if (item.enclosure && item.enclosure["@_url"]) imageUrl = item.enclosure["@_url"]
       // Fallback: try to extract from content/description
