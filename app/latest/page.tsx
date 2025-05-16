@@ -7,20 +7,27 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertCircle } from "lucide-react"
 import type { NewsArticle } from "@/lib/news-api"
+import { ModernPagination } from "@/components/ui/modern-pagination"
 
 export default function LatestNewsPage() {
   const [articles, setArticles] = useState<NewsArticle[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [page, setPage] = useState(1)
+  const [total, setTotal] = useState(0)
+  const pageSize = 18
 
   useEffect(() => {
     const loadAllNews = async () => {
       setLoading(true)
       setError(null)
       try {
-        // Fetch a large number to get all news (or implement pagination if needed)
-        const data = await fetchLatestNews("all", 1000)
-        setArticles(data)
+        const params = new URLSearchParams({ limit: pageSize.toString(), page: page.toString() })
+        const res = await fetch(`/api/news?${params.toString()}`)
+        if (!res.ok) throw new Error("Failed to load news.")
+        const data = await res.json()
+        setArticles(data.articles)
+        setTotal(data.pagination?.total || 0)
       } catch (error) {
         setError("Failed to load news.")
       } finally {
@@ -28,7 +35,7 @@ export default function LatestNewsPage() {
       }
     }
     loadAllNews()
-  }, [])
+  }, [page])
 
   if (loading) {
     return (
@@ -84,6 +91,14 @@ export default function LatestNewsPage() {
             <NewsCard article={article} />
           </a>
         ))}
+      </div>
+      <div className="flex justify-center mt-8">
+        <ModernPagination
+          currentPage={page}
+          totalCount={total}
+          pageSize={pageSize}
+          onPageChange={setPage}
+        />
       </div>
     </section>
   )
