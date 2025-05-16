@@ -795,14 +795,27 @@ async function parseRSSFeed(source: string): Promise<NewsArticle[]> {
         const imgMatch = (item["content:encoded"] || item.content || item.description || "").match(/<img[^>]+src=["']([^"'>]+)["']/i)
         if (imgMatch && imgMatch[1]) imageUrl = imgMatch[1]
       }
-      // Special fallback for Daily Trust: look for enclosure.url (not @_url) or og:image in description
+      // Special fallback for Daily Trust: look for enclosure.url (not @_url), og:image, or first <img> in description
       if (source === "dailytrust") {
-        if (item.enclosure && item.enclosure.url) imageUrl = item.enclosure.url
-        if (!imageUrl || imageUrl === sourceConfig.defaultImage) {
-          const ogImgMatch = (item.description || "").match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
-          if (ogImgMatch && ogImgMatch[1]) imageUrl = ogImgMatch[1]
-        }
+  // Try enclosure.url (not @_url)
+  if (item.enclosure && item.enclosure.url) imageUrl = item.enclosure.url
+  // Try og:image in description (meta tag)
+  if ((!imageUrl || imageUrl === sourceConfig.defaultImage) && item.description) {
+    const ogImgMatch = item.description.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
+    if (ogImgMatch && ogImgMatch[1]) imageUrl = ogImgMatch[1]
+  }
+  // Try first <img> in description (HTML img tag)
+  if ((!imageUrl || imageUrl === sourceConfig.defaultImage) && item.description) {
+    // Parse the HTML to robustly extract the first <img src>
+    try {
+      const descRoot = parse(item.description)
+      const firstImg = descRoot.querySelector("img[src]")
+      if (firstImg && firstImg.getAttribute("src")) {
+        imageUrl = firstImg.getAttribute("src") || ""
       }
+    } catch {}
+  }
+}
       // Final fallback
       if (!imageUrl) imageUrl = sourceConfig.defaultImage
       // Unique ID
@@ -815,7 +828,7 @@ async function parseRSSFeed(source: string): Promise<NewsArticle[]> {
         slug,
         excerpt: description.substring(0, 200) + (description.length > 200 ? "..." : ""),
         content,
-        imageUrl,
+        imageUrl: imageUrl || sourceConfig.defaultImage,
         category,
         source: sourceConfig.name,
         sourceUrl: canonicalUrl,
