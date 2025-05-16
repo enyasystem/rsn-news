@@ -18,7 +18,8 @@ export default function LatestNewsPage() {
       setLoading(true)
       setError(null)
       try {
-        const data = await fetchLatestNews("all", 30)
+        // Fetch a large number to get all news (or implement pagination if needed)
+        const data = await fetchLatestNews("all", 1000)
         setArticles(data)
       } catch (error) {
         setError("Failed to load news.")
@@ -77,7 +78,7 @@ export default function LatestNewsPage() {
   return (
     <section>
       <h1 className="text-3xl font-bold mb-6">All Latest News</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {articles.map((article) => (
           <a key={article.id} href={article.sourceUrl} target="_blank" rel="noopener noreferrer" className="block">
             <NewsCard article={article} />
