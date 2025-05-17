@@ -2,16 +2,16 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { CATEGORIES } from "@/lib/categories"
 
 const navLinks = [
   { href: "/", label: "Home" },
   { href: "/latest", label: "Latest" },
   { href: "/trending", label: "Trending" },
-  { href: "/category/politics", label: "Politics" },
-  { href: "/category/business", label: "Business" },
-  { href: "/category/sports", label: "Sports" },
-  { href: "/category/entertainment", label: "Entertainment" },
-  { href: "/category/technology", label: "Technology" },
+  ...CATEGORIES.map(cat => ({
+    href: `/category/${cat.slug}`,
+    label: cat.name
+  })),
   { href: "/search", label: "Search" }
 ]
 

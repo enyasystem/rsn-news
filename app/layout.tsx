@@ -10,7 +10,36 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata = {
   title: "RSN NEWS",
   description: "Beyond Headlines - Your trusted source for Nigerian news and global updates",
-    // generator: 'v0.dev'
+  icons: {
+    icon: "/favicon.svg",
+    shortcut: "/favicon.svg",
+    apple: "/favicon.svg"
+  },
+  openGraph: {
+    title: "RSN NEWS",
+    description: "Beyond Headlines - Your trusted source for Nigerian news and global updates",
+    images: [
+      {
+        url: "/placeholder-logo.svg",
+        width: 215,
+        height: 48,
+        alt: "RSN NEWS Logo"
+      }
+    ]
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "RSN NEWS",
+    description: "Beyond Headlines - Your trusted source for Nigerian news and global updates",
+    images: [
+      {
+        url: "/placeholder-logo.svg",
+        width: 215,
+        height: 48,
+        alt: "RSN NEWS Logo"
+      }
+    ]
+  }
 }
 
 export default function RootLayout({

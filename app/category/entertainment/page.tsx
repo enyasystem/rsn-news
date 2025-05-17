@@ -1,8 +1,15 @@
 import { fetchNewsByCategory } from "@/lib/news-service"
 import { NewsCard } from "@/components/news-card"
 
-export default async function CategoryPage({ params }) {
-  const { slug } = params
+interface CategoryPageProps {
+  params: {
+    slug?: string;
+  };
+}
+
+export default async function CategoryPage({ params }: CategoryPageProps) {
+  // Fallback for params or slug to prevent undefined errors during build
+  const slug = (params && params.slug) ? params.slug : "entertainment"
   const articles = await fetchNewsByCategory(slug, 10)
   return (
     <section>
