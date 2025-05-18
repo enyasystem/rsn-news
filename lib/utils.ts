@@ -14,7 +14,7 @@ export function cleanContent(content: string): string {
   if (!content) return ""
 
   // Remove CDATA sections
-  let cleaned = content.replace(/<!\[CDATA\[(.*?)\]\]>/gs, "$1")
+  let cleaned = content.replace(/<!\[CDATA\[((.|\n)*?)\]\]>/g, "$1")
 
   // Remove script tags and their contents
   cleaned = cleaned.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
