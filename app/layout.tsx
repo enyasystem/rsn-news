@@ -49,11 +49,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
+      <body className={inter.className + " bg-white text-black dark:bg-black dark:text-white min-h-screen antialiased"}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <div className="flex min-h-screen flex-col">
             <Header />
-            <main className="flex-1">{children}</main>
+            <main className="flex-1 w-full max-w-7xl mx-auto px-2 sm:px-4 md:px-6 lg:px-8 xl:px-10 2xl:px-0">
+              {children}
+            </main>
             <Footer />
           </div>
         </ThemeProvider>

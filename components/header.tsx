@@ -68,8 +68,8 @@ export default function Header() {
             </Link>
           </div>
 
+          {/* Nav icons: search, theme, menu (no notification) */}
           <div className="flex items-center space-x-2 flex-shrink-0">
-            {/* Watch Live Button - Header */}
             <a
               href="https://www.youtube.com/@RSNEWSONLINE"
               target="_blank"
@@ -101,12 +101,6 @@ export default function Header() {
               <Search className="h-5 w-5" />
               <span className="sr-only">Search</span>
             </Button>
-
-            <Button variant={isScrolled ? "ghost" : "secondary"} size="icon" className="rounded-full">
-              <Bell className="h-5 w-5" />
-              <span className="sr-only">Notifications</span>
-            </Button>
-
             <Button
               variant={isScrolled ? "ghost" : "secondary"}
               size="icon"
@@ -116,7 +110,6 @@ export default function Header() {
               {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
               <span className="sr-only">Toggle theme</span>
             </Button>
-
             {/* Hamburger menu for mobile */}
             <Sheet>
               <SheetTrigger asChild>
