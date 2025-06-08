@@ -1,64 +1,84 @@
-// This file now uses in-memory data instead of MongoDB
-// We'll use the mock data directly from mock-data.ts
+// This file now uses SQLite instead of MongoDB
+// We'll set up the SQLite database and tables here
 
-import { mockLatestNews, mockCategoryNews, mockTrendingNews } from "@/lib/mock-data"
+import Database from 'better-sqlite3'
+import path from 'path'
 
-// Combined articles from all sources
-const allArticles = [...mockLatestNews, ...mockCategoryNews, ...mockTrendingNews]
+const dbPath = path.resolve(process.cwd(), 'rsn-news.db')
+const db = new Database(dbPath)
 
-export async function getArticles(options: {
-  category?: string
-  source?: string
-  limit?: number
-  skip?: number
-  search?: string
-}) {
-  const { category, source, limit = 10, skip = 0, search } = options
+db.exec(`
+CREATE TABLE IF NOT EXISTS profile (
+  id TEXT PRIMARY KEY,
+  email TEXT UNIQUE,
+  role TEXT DEFAULT 'user',
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
 
-  // Filter articles based on options
-  let filteredArticles = [...allArticles]
+CREATE TABLE IF NOT EXISTS news (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  title TEXT NOT NULL,
+  content TEXT NOT NULL,
+  category TEXT NOT NULL,
+  image_url TEXT,
+  author_id TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (author_id) REFERENCES profile(id)
+);
+`)
 
-  if (category) {
-    filteredArticles = filteredArticles.filter((article) => article.category.toLowerCase() === category.toLowerCase())
-  }
+export default db
 
-  if (source) {
-    filteredArticles = filteredArticles.filter((article) => article.source.toLowerCase() === source.toLowerCase())
-  }
+// Remove all mock data and mock-based functions below, and replace with real SQLite CRUD helpers
 
-  if (search) {
-    const searchLower = search.toLowerCase()
-    filteredArticles = filteredArticles.filter(
-      (article) =>
-        article.title.toLowerCase().includes(searchLower) || article.excerpt.toLowerCase().includes(searchLower),
-    )
-  }
-
-  // Sort by published date (newest first)
-  filteredArticles.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
-
-  // Apply pagination
-  const paginatedArticles = filteredArticles.slice(skip, skip + limit)
-
-  return {
-    articles: paginatedArticles,
-    total: filteredArticles.length,
-  }
+// --- Profile CRUD ---
+export function createProfile({ id, email, role = 'user' }: { id: string, email: string, role?: string }) {
+  const stmt = db.prepare('INSERT INTO profile (id, email, role) VALUES (?, ?, ?)');
+  stmt.run(id, email, role);
 }
 
-export async function getArticleBySlug(slug: string) {
-  return allArticles.find((article) => article.slug === slug) || null
+export function getProfileByEmail(email: string) {
+  const stmt = db.prepare('SELECT * FROM profile WHERE email = ?');
+  return stmt.get(email);
 }
 
-export async function getTrendingArticles(limit = 5) {
-  // In a real app, this would use metrics like view count
-  // For now, we'll just return the mockTrendingNews
-  return mockTrendingNews.slice(0, limit)
+export function getProfileById(id: string) {
+  const stmt = db.prepare('SELECT * FROM profile WHERE id = ?');
+  return stmt.get(id);
 }
 
-export async function getLatestArticles(limit = 5) {
-  // Sort all articles by date and return the most recent ones
-  const sorted = [...allArticles].sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
+export function updateProfileRole(id: string, role: string) {
+  const stmt = db.prepare('UPDATE profile SET role = ? WHERE id = ?');
+  stmt.run(role, id);
+}
 
-  return sorted.slice(0, limit)
+export function deleteProfile(id: string) {
+  const stmt = db.prepare('DELETE FROM profile WHERE id = ?');
+  stmt.run(id);
+}
+
+// --- News CRUD ---
+export function createNews({ title, content, category, image_url, author_id }: { title: string, content: string, category: string, image_url?: string, author_id?: string }) {
+  const stmt = db.prepare('INSERT INTO news (title, content, category, image_url, author_id) VALUES (?, ?, ?, ?, ?)');
+  stmt.run(title, content, category, image_url || '', author_id || null);
+}
+
+export function getAllNews() {
+  const stmt = db.prepare('SELECT * FROM news ORDER BY created_at DESC');
+  return stmt.all();
+}
+
+export function getNewsById(id: number) {
+  const stmt = db.prepare('SELECT * FROM news WHERE id = ?');
+  return stmt.get(id);
+}
+
+export function updateNews({ id, title, content, category, image_url }: { id: number, title: string, content: string, category: string, image_url?: string }) {
+  const stmt = db.prepare('UPDATE news SET title = ?, content = ?, category = ?, image_url = ? WHERE id = ?');
+  stmt.run(title, content, category, image_url || '', id);
+}
+
+export function deleteNews(id: number) {
+  const stmt = db.prepare('DELETE FROM news WHERE id = ?');
+  stmt.run(id);
 }

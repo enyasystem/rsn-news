@@ -1,52 +1,63 @@
-import { NextResponse } from "next/server"
-import { fetchNewsFromAllSources, fetchNewsFromSource, searchNews } from "@/lib/news-api"
+import db from '@/lib/db';
+import { randomUUID } from 'crypto';
+import { NextRequest, NextResponse } from 'next/server';
+import fs from 'fs';
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url)
-  const category = searchParams.get("category")
-  const source = searchParams.get("source")
-  const query = searchParams.get("q")
-  const limit = Number.parseInt(searchParams.get("limit") || "10")
-  const page = Number.parseInt(searchParams.get("page") || "1")
+export async function POST(req: NextRequest) {
+  const form = await req.formData();
+  const title = form.get('title') as string;
+  const content = form.get('content') as string;
+  const category = form.get('category') as string;
+  const author_id = form.get('author_id') as string;
+  let image_url = '';
 
-  try {
-    let articles
-
-    if (query) {
-      // Search functionality
-      articles = await searchNews(query, category || undefined, source || undefined)
-    } else if (source && source !== "all") {
-      // Source-specific news
-      articles = await fetchNewsFromSource(source)
-
-      if (category && category !== "all") {
-        articles = articles.filter((article) => article.category.toLowerCase() === category.toLowerCase())
-      }
-    } else {
-      // All news or category-filtered news
-      articles = await fetchNewsFromAllSources()
-
-      if (category && category !== "all") {
-        articles = articles.filter((article) => article.category.toLowerCase() === category.toLowerCase())
-      }
-    }
-
-    // Apply pagination
-    const total = articles.length
-    const skip = (page - 1) * limit
-    const paginatedArticles = articles.slice(skip, skip + limit)
-
-    return NextResponse.json({
-      articles: paginatedArticles,
-      pagination: {
-        total,
-        page,
-        limit,
-        pages: Math.ceil(total / limit),
-      },
-    })
-  } catch (error) {
-    console.error("Error fetching news:", error)
-    return NextResponse.json({ error: "Failed to fetch news" }, { status: 500 })
+  // Handle image upload (save to /public/images/news/)
+  const image = form.get('image') as File | null;
+  if (image) {
+    const arrayBuffer = await image.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    const ext = image.name.split('.').pop();
+    const fileName = `${Date.now()}-${randomUUID()}.${ext}`;
+    const filePath = `public/images/news/${fileName}`;
+    fs.writeFileSync(filePath, buffer);
+    image_url = `/images/news/${fileName}`;
   }
+
+  const stmt = db.prepare('INSERT INTO news (title, content, category, image_url, author_id) VALUES (?, ?, ?, ?, ?)');
+  stmt.run(title, content, category, image_url, author_id);
+
+  return NextResponse.json({ success: true });
+}
+
+export async function PUT(req: NextRequest) {
+  const form = await req.formData();
+  const id = form.get('id') as string;
+  const title = form.get('title') as string;
+  const content = form.get('content') as string;
+  const category = form.get('category') as string;
+  let image_url = form.get('image_url') as string;
+
+  // Handle image upload (optional)
+  const image = form.get('image') as File | null;
+  if (image) {
+    const arrayBuffer = await image.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    const ext = image.name.split('.').pop();
+    const fileName = `${Date.now()}-${randomUUID()}.${ext}`;
+    const filePath = `public/images/news/${fileName}`;
+    fs.writeFileSync(filePath, buffer);
+    image_url = `/images/news/${fileName}`;
+  }
+
+  const stmt = db.prepare('UPDATE news SET title=?, content=?, category=?, image_url=? WHERE id=?');
+  stmt.run(title, content, category, image_url, id);
+
+  return NextResponse.json({ success: true });
+}
+
+export async function DELETE(req: NextRequest) {
+  const { id } = await req.json();
+  const stmt = db.prepare('DELETE FROM news WHERE id=?');
+  stmt.run(id);
+  return NextResponse.json({ success: true });
 }
