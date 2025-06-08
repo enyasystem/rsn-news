@@ -23,6 +23,10 @@ export default function AdminLogin({ onLogin }: { onLogin?: () => void }) {
       if (!res.ok) {
         setError(data.error || "Login failed")
       } else {
+        // Save session to localStorage for dashboard access
+        if (typeof window !== "undefined") {
+          localStorage.setItem("admin_session", JSON.stringify(data.user))
+        }
         if (onLogin) onLogin()
         router.push("/admin") // Redirect to dashboard after login
       }

@@ -7,7 +7,14 @@ export default function AdminLoginPage() {
   const [showRegister, setShowRegister] = useState(false)
 
   useEffect(() => {
-    // Optionally, you could check if an admin exists and hide register if so
+    // Hide register if admin exists
+    fetch("/api/admin/register", { method: "GET" })
+      .then(res => res.json())
+      .then(users => {
+        if (Array.isArray(users) && users.some(u => u.role === "admin")) {
+          setShowRegister(false)
+        }
+      })
   }, [])
 
   return (
@@ -23,7 +30,7 @@ export default function AdminLoginPage() {
         ) : (
           <>
             <AdminLogin />
-            <button className="mt-4 w-full text-blue-600 underline" onClick={() => setShowRegister(true)}>
+            <button className="mt-4 w-full text-blue-600 underline" onClick={() => setShowRegister(true)} disabled={showRegister}>
               Register Admin
             </button>
           </>
