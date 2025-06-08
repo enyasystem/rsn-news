@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabaseClient"
 import { useRouter } from "next/navigation"
+import NewsPostForm from "@/components/news-post-form"
 
 export default function AdminPage() {
   const [user, setUser] = useState<any>(null)
@@ -35,6 +36,7 @@ export default function AdminPage() {
         >
           Logout
         </button>
+        <NewsPostForm />
         {/* News posting form and dashboard UI will go here */}
       </div>
     </div>
