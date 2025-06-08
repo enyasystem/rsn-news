@@ -6,8 +6,8 @@ export async function POST(req: NextRequest) {
   if (!email || !password) {
     return NextResponse.json({ error: 'Email and password are required.' }, { status: 400 });
   }
-  const user = db.prepare('SELECT * FROM profile WHERE email = ? AND password = ?').get(email, password);
-  if (!user) {
+  const user = db.prepare('SELECT * FROM profile WHERE email = ? AND password = ?').get(email, password) as { id?: string, email?: string, role?: string } | undefined;
+  if (!user || !user.id || !user.email || !user.role) {
     return NextResponse.json({ error: 'Invalid credentials.' }, { status: 401 });
   }
   // You can set a session/cookie here if you want
