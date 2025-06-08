@@ -1,11 +1,13 @@
 "use client"
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 
 export default function AdminLogin({ onLogin }: { onLogin?: () => void }) {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+  const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -22,7 +24,7 @@ export default function AdminLogin({ onLogin }: { onLogin?: () => void }) {
         setError(data.error || "Login failed")
       } else {
         if (onLogin) onLogin()
-        // Optionally, store user info in state/context or redirect
+        router.push("/admin") // Redirect to dashboard after login
       }
     } catch (err: any) {
       setError("Failed to login: " + err.message)
