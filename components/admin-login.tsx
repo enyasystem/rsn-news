@@ -1,29 +1,37 @@
+"use client"
 import { useState } from "react"
-import { supabase } from "@/lib/supabaseClient"
-import { useRouter } from "next/navigation"
 
-export default function AdminLogin() {
+export default function AdminLogin({ onLogin }: { onLogin?: () => void }) {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
-  const router = useRouter()
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
     setError("")
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    setLoading(false)
-    if (error) {
-      setError(error.message)
-    } else {
-      router.refresh()
+    setLoading(true)
+    try {
+      const res = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.error || "Login failed")
+      } else {
+        if (onLogin) onLogin()
+        // Optionally, store user info in state/context or redirect
+      }
+    } catch (err: any) {
+      setError("Failed to login: " + err.message)
     }
+    setLoading(false)
   }
 
   return (
-    <form onSubmit={handleLogin} className="space-y-4 max-w-sm mx-auto">
+    <form onSubmit={handleSubmit} className="space-y-4 max-w-sm mx-auto">
       <h2 className="text-xl font-semibold">Admin Login</h2>
       <input
         type="email"
