@@ -11,6 +11,7 @@ db.exec(`
 CREATE TABLE IF NOT EXISTS profile (
   id TEXT PRIMARY KEY,
   email TEXT UNIQUE,
+  password TEXT NOT NULL,
   role TEXT DEFAULT 'user',
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
@@ -27,14 +28,12 @@ CREATE TABLE IF NOT EXISTS news (
 );
 `)
 
-export default db
-
 // Remove all mock data and mock-based functions below, and replace with real SQLite CRUD helpers
 
 // --- Profile CRUD ---
-export function createProfile({ id, email, role = 'user' }: { id: string, email: string, role?: string }) {
-  const stmt = db.prepare('INSERT INTO profile (id, email, role) VALUES (?, ?, ?)');
-  stmt.run(id, email, role);
+export function createProfile({ id, email, password, role = 'user' }: { id: string, email: string, password: string, role?: string }) {
+  const stmt = db.prepare('INSERT INTO profile (id, email, password, role) VALUES (?, ?, ?, ?)');
+  stmt.run(id, email, password, role);
 }
 
 export function getProfileByEmail(email: string) {
@@ -82,3 +81,5 @@ export function deleteNews(id: number) {
   const stmt = db.prepare('DELETE FROM news WHERE id = ?');
   stmt.run(id);
 }
+
+export default db;
