@@ -1,6 +1,4 @@
 import { useState } from "react";
-import { v4 as uuidv4 } from "uuid";
-import { createProfile, getProfileByEmail } from "@/lib/db";
 
 export default function AdminRegisterForm({ onRegister }: { onRegister?: () => void }) {
   const [email, setEmail] = useState("");
@@ -9,23 +7,26 @@ export default function AdminRegisterForm({ onRegister }: { onRegister?: () => v
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setSuccess("");
     setLoading(true);
-    const id = uuidv4();
     try {
-      if (getProfileByEmail(email)) {
-        setError("Email already exists.");
-        setLoading(false);
-        return;
+      const res = await fetch("/api/admin/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Registration failed");
+      } else {
+        setSuccess("Admin user created successfully!");
+        setEmail("");
+        setPassword("");
+        if (onRegister) onRegister();
       }
-      createProfile({ id, email, password, role: "admin" });
-      setSuccess("Admin user created successfully!");
-      setEmail("");
-      setPassword("");
-      if (onRegister) onRegister();
     } catch (err: any) {
       setError("Failed to create admin: " + err.message);
     }
