@@ -179,7 +179,17 @@ const NEWS_SOURCES = {
       category: "category",
       media: "media:content",
       enclosure: "enclosure",
-      imageSelectors: ["meta[property='og:image']", ".entry-content img", "img"],
+      // Add more robust selectors for images
+      imageSelectors: [
+        "meta[property='og:image']",
+        "meta[name='twitter:image']",
+        ".entry-content img",
+        ".featured-image img",
+        "img[data-src]",
+        "img[data-lazy-src]",
+        "img[srcset]",
+        "img"
+      ],
     },
     defaultImage: "/images/sources/dailytrust-logo.png",
   },
@@ -791,31 +801,43 @@ async function parseRSSFeed(source: string): Promise<NewsArticle[]> {
       if (item["media:content"] && item["media:content"]["@_url"]) imageUrl = item["media:content"]["@_url"]
       else if (item.enclosure && item.enclosure["@_url"]) imageUrl = item.enclosure["@_url"]
       // Fallback: try to extract from content/description
-      if (!imageUrl || imageUrl === sourceConfig.defaultImage) {
+      if ((!imageUrl || imageUrl === sourceConfig.defaultImage) && (item["content:encoded"] || item.content || item.description)) {
         const imgMatch = (item["content:encoded"] || item.content || item.description || "").match(/<img[^>]+src=["']([^"'>]+)["']/i)
         if (imgMatch && imgMatch[1]) imageUrl = imgMatch[1]
       }
-      // Special fallback for Daily Trust: look for enclosure.url (not @_url), og:image, or first <img> in description
+      // Special fallback for Daily Trust: look for enclosure.url (not @_url), og:image, twitter:image, or first <img> in description
       if (source === "dailytrust") {
-  // Try enclosure.url (not @_url)
-  if (item.enclosure && item.enclosure.url) imageUrl = item.enclosure.url
-  // Try og:image in description (meta tag)
-  if ((!imageUrl || imageUrl === sourceConfig.defaultImage) && item.description) {
-    const ogImgMatch = item.description.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
-    if (ogImgMatch && ogImgMatch[1]) imageUrl = ogImgMatch[1]
-  }
-  // Try first <img> in description (HTML img tag)
-  if ((!imageUrl || imageUrl === sourceConfig.defaultImage) && item.description) {
-    // Parse the HTML to robustly extract the first <img src>
-    try {
-      const descRoot = parse(item.description)
-      const firstImg = descRoot.querySelector("img[src]")
-      if (firstImg && firstImg.getAttribute("src")) {
-        imageUrl = firstImg.getAttribute("src") || ""
+        // Try enclosure.url (not @_url)
+        if (item.enclosure && item.enclosure.url) imageUrl = item.enclosure.url
+        // Try og:image in description (meta tag)
+        if ((!imageUrl || imageUrl === sourceConfig.defaultImage) && item.description) {
+          const ogImgMatch = item.description.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
+          if (ogImgMatch && ogImgMatch[1]) imageUrl = ogImgMatch[1]
+        }
+        // Try twitter:image in description (meta tag)
+        if ((!imageUrl || imageUrl === sourceConfig.defaultImage) && item.description) {
+          const twImgMatch = item.description.match(/<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i)
+          if (twImgMatch && twImgMatch[1]) imageUrl = twImgMatch[1]
+        }
+        // Try first <img> in description (HTML img tag)
+        if ((!imageUrl || imageUrl === sourceConfig.defaultImage) && item.description) {
+          try {
+            const descRoot = parse(item.description)
+            const firstImg = descRoot.querySelector("img[src]")
+            if (firstImg && firstImg.getAttribute("src")) {
+              imageUrl = firstImg.getAttribute("src") || ""
+            }
+          } catch {}
+        }
+        // Ensure imageUrl is absolute and valid
+        if (imageUrl && !/^https?:\/\//i.test(imageUrl)) {
+          imageUrl = resolveImageUrl(imageUrl, sourceConfig.url)
+        }
+        // If imageUrl is still not valid, fallback to default
+        if (!isValidImageUrl(imageUrl)) {
+          imageUrl = sourceConfig.defaultImage
+        }
       }
-    } catch {}
-  }
-}
       // Final fallback
       if (!imageUrl) imageUrl = sourceConfig.defaultImage
       // Unique ID
@@ -827,7 +849,7 @@ async function parseRSSFeed(source: string): Promise<NewsArticle[]> {
         title,
         slug,
         excerpt: description.substring(0, 200) + (description.length > 200 ? "..." : ""),
-        content,
+        content: content || "", // Ensure content is always a string
         imageUrl: imageUrl || sourceConfig.defaultImage,
         category,
         source: sourceConfig.name,
@@ -835,7 +857,10 @@ async function parseRSSFeed(source: string): Promise<NewsArticle[]> {
         publishedAt,
       }
     })
-    return await Promise.all(articlePromises)
+    // Filter out undefined/null results and ensure content is always a string
+    return (await Promise.all(articlePromises))
+      .filter((a) => !!a && typeof a.id === 'string')
+      .map(a => ({ ...a, content: a.content ?? "" }))
   } catch (error) {
     console.error(`Error fetching from ${sourceConfig.name}:`, error)
     return []
