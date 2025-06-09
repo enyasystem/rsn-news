@@ -61,3 +61,34 @@ export async function DELETE(req: NextRequest) {
   stmt.run(id);
   return NextResponse.json({ success: true });
 }
+
+export async function GET(req: NextRequest) {
+  // Parse query params for pagination/limit
+  const { searchParams } = new URL(req.url);
+  const limit = Number.parseInt(searchParams.get('limit') || '10');
+  const page = Number.parseInt(searchParams.get('page') || '1');
+
+  try {
+    // Import fetchLatestNews from your news-api (aggregator)
+    const { fetchNewsFromAllSources } = await import('@/lib/news-api');
+    const allArticles = await fetchNewsFromAllSources();
+    // Sort by published date (newest first)
+    const sorted = allArticles.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+    // Paginate
+    const start = (page - 1) * limit;
+    const end = start + limit;
+    const articles = sorted.slice(start, end);
+    return NextResponse.json({
+      articles,
+      pagination: {
+        total: allArticles.length,
+        page,
+        limit,
+        pages: Math.ceil(allArticles.length / limit),
+      },
+    });
+  } catch (error) {
+    console.error('Error fetching latest news:', error);
+    return NextResponse.json({ error: 'Failed to fetch latest news', articles: [] }, { status: 500 });
+  }
+}
