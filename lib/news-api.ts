@@ -805,10 +805,12 @@ async function parseRSSFeed(source: string): Promise<NewsArticle[]> {
         const imgMatch = (item["content:encoded"] || item.content || item.description || "").match(/<img[^>]+src=["']([^"'>]+)["']/i)
         if (imgMatch && imgMatch[1]) imageUrl = imgMatch[1]
       }
-      // Special fallback for Daily Trust: look for enclosure.url (not @_url), og:image, twitter:image, or first <img> in description
+      // Special fallback for Daily Trust: look for enclosure.url, enclosure['@_url'], og:image, twitter:image, or first <img> in description
       if (source === "dailytrust") {
         // Try enclosure.url (not @_url)
         if (item.enclosure && item.enclosure.url) imageUrl = item.enclosure.url
+        // Try enclosure['@_url']
+        if ((!imageUrl || imageUrl === sourceConfig.defaultImage) && item.enclosure && item.enclosure["@_url"]) imageUrl = item.enclosure["@_url"]
         // Try og:image in description (meta tag)
         if ((!imageUrl || imageUrl === sourceConfig.defaultImage) && item.description) {
           const ogImgMatch = item.description.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
