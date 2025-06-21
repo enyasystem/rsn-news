@@ -1,6 +1,9 @@
+"use client";
 import React from "react";
+import { useRouter } from "next/navigation";
 
 export default function AdminDashboardPage() {
+  const router = useRouter();
   return (
     <div className="w-full max-w-7xl mx-auto py-6 px-2 sm:px-4 md:px-6 lg:px-8">
       <h1 className="text-2xl md:text-3xl font-bold mb-8 tracking-tight">
@@ -58,13 +61,25 @@ export default function AdminDashboardPage() {
         <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-md p-6 border border-gray-100 dark:border-neutral-800">
           <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
           <div className="flex flex-col gap-3">
-            <button className="w-full bg-primary text-primary-foreground font-semibold py-2 rounded-lg hover:bg-primary/90 transition">
+            <button
+              className="w-full bg-primary text-primary-foreground font-semibold py-2 rounded-lg hover:bg-primary/90 transition"
+              onClick={() => router.push("/admin/news")}
+              aria-label="Add News Post"
+            >
               Add News Post
             </button>
-            <button className="w-full bg-secondary text-secondary-foreground font-semibold py-2 rounded-lg hover:bg-secondary/90 transition">
+            <button
+              className="w-full bg-secondary text-secondary-foreground font-semibold py-2 rounded-lg hover:bg-secondary/90 transition"
+              onClick={() => router.push("/admin/categories")}
+              aria-label="Manage Categories"
+            >
               Manage Categories
             </button>
-            <button className="w-full bg-muted text-muted-foreground font-semibold py-2 rounded-lg hover:bg-muted/80 transition">
+            <button
+              className="w-full bg-muted text-muted-foreground font-semibold py-2 rounded-lg hover:bg-muted/80 transition"
+              onClick={() => router.push("/admin/users")}
+              aria-label="View All Admins"
+            >
               View All Admins
             </button>
           </div>
