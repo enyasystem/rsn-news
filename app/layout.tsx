@@ -1,10 +1,8 @@
 import type React from "react"
 import { Inter } from "next/font/google"
 import { ThemeProvider } from "@/components/theme-provider"
-import Header from "@/components/header"
-import Footer from "@/components/footer"
+import RootLayoutClient from "@/components/root-layout-client"
 import "./globals.css"
-import { headers } from "next/headers";
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -43,28 +41,17 @@ export const metadata = {
   }
 }
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  // Get the current path from headers (works server-side)
-  const headersList = await headers();
-  const path = headersList.get("x-invoke-path") || "";
-  const isAdmin = path.startsWith("/admin");
-
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className + " bg-white text-black dark:bg-black dark:text-white min-h-screen antialiased"}>
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
-          <div className="flex min-h-screen flex-col">
-            {!isAdmin && <Header />}
-            <main className={isAdmin ? "flex-1 w-full" : "flex-1 w-full max-w-7xl mx-auto px-2 sm:px-4 md:px-6 lg:px-8 xl:px-10 2xl:px-0"}>
-              {children}
-            </main>
-            {!isAdmin && <Footer />}
-          </div>
-        </ThemeProvider>
+        <RootLayoutClient>
+          {children}
+        </RootLayoutClient>
       </body>
     </html>
   )
