@@ -10,9 +10,9 @@ export const metadata = {
   title: "RSN NEWS",
   description: "Beyond Headlines - Your trusted source for Nigerian news and global updates",
   icons: {
-    icon: "/favicon.svg",
-    shortcut: "/favicon.svg",
-    apple: "/favicon.svg"
+    icon: "/RSN NEWS.jpg",
+    shortcut: "/RSN NEWS.jpg",
+    apple: "/RSN NEWS.jpg"
   },
   openGraph: {
     title: "RSN NEWS",

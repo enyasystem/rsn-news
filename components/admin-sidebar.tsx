@@ -15,6 +15,7 @@ import {
 } from "./ui/sidebar";
 import { useRouter } from "next/navigation";
 import { LogOut, Newspaper, List, Users, Settings } from "lucide-react";
+import Image from "next/image";
 
 export default function AdminSidebar({ className = "" }: { className?: string }) {
   const router = useRouter();
@@ -22,7 +23,10 @@ export default function AdminSidebar({ className = "" }: { className?: string })
     <SidebarProvider>
       <Sidebar className={className}>
         <SidebarHeader>
-          <span className="text-xl font-bold tracking-tight">RSN Admin</span>
+          <div className="flex items-center gap-2">
+            <Image src="/RSN NEWS.jpg" alt="RSN News Logo" width={40} height={40} className="rounded-full bg-white p-1 shadow-sm" />
+            <span className="text-xl font-bold tracking-tight">RSN Admin</span>
+          </div>
         </SidebarHeader>
         <SidebarContent>
           <SidebarGroup>
