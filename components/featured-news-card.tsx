@@ -14,7 +14,7 @@ interface FeaturedNewsCardProps {
 
 export function FeaturedNewsCard({ article }: FeaturedNewsCardProps) {
   // Determine fallback image based on source
-  const fallbackImage = `/images/sources/${article.source.toLowerCase().replace(/\s+/g, "")}-logo.png`
+  const fallbackImage = `/images/sources/${(article.source ? article.source.toLowerCase().replace(/\s+/g, "") : "admin")}-logo.png`
 
   return (
     <div className="group relative overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
