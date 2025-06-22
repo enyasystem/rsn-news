@@ -12,7 +12,7 @@ export interface NewsArticle {
   excerpt: string
   content?: string
   imageUrl: string
-  category: string
+  category: string | { name: string }
   source: string
   sourceUrl: string
   publishedAt: string
@@ -987,7 +987,10 @@ export async function fetchNewsByCategory(category: string): Promise<NewsArticle
 
   try {
     const allArticles = await fetchNewsFromAllSources()
-    const filteredArticles = allArticles.filter((article) => article.category.toLowerCase() === category.toLowerCase())
+    const filteredArticles = allArticles.filter((article) => {
+      const articleCategory = typeof article.category === "object" && article.category ? article.category.name : article.category;
+      return articleCategory.toLowerCase() === category.toLowerCase();
+    });
 
     // Update cache
     cache[cacheKey] = {
@@ -1018,16 +1021,17 @@ export async function searchNews(query: string, category?: string, source?: stri
       const matchesQuery =
         !query ||
         article.title.toLowerCase().includes(query.toLowerCase()) ||
-        article.excerpt.toLowerCase().includes(query.toLowerCase())
+        article.excerpt.toLowerCase().includes(query.toLowerCase());
 
       // Filter by category
+      const articleCategory = typeof article.category === "object" && article.category ? article.category.name : article.category;
       const matchesCategory =
-        !category || category === "all" || article.category.toLowerCase() === category.toLowerCase()
+        !category || category === "all" || articleCategory.toLowerCase() === category.toLowerCase();
 
       // Filter by source
-      const matchesSource = !source || source === "all" || article.source.toLowerCase() === source.toLowerCase()
+      const matchesSource = !source || source === "all" || article.source.toLowerCase() === source.toLowerCase();
 
-      return matchesQuery && matchesCategory && matchesSource
+      return matchesQuery && matchesCategory && matchesSource;
     })
   } catch (error) {
     console.error("Error searching news:", error)
