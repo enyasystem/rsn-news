@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, ChangeEvent } from "react";
 
 interface NewsItem {
 	id: number;
@@ -17,6 +17,8 @@ export default function AdminNewsPage() {
 	const [showForm, setShowForm] = useState(false);
 	const [editId, setEditId] = useState<number | null>(null);
 	const [form, setForm] = useState({ title: "", content: "", imageUrl: "" });
+	const [imageFile, setImageFile] = useState<File | null>(null);
+	const [useFile, setUseFile] = useState(false);
 	const [submitting, setSubmitting] = useState(false);
 
 	// Fetch news from API
@@ -41,6 +43,8 @@ export default function AdminNewsPage() {
 
 	const handleAdd = () => {
 		setForm({ title: "", content: "", imageUrl: "" });
+		setImageFile(null);
+		setUseFile(false);
 		setEditId(null);
 		setShowForm(true);
 	};
@@ -50,6 +54,8 @@ export default function AdminNewsPage() {
 			content: item.content,
 			imageUrl: item.imageUrl || "",
 		});
+		setImageFile(null);
+		setUseFile(false);
 		setEditId(item.id);
 		setShowForm(true);
 	};
@@ -66,17 +72,46 @@ export default function AdminNewsPage() {
 			setSubmitting(false);
 		}
 	};
+
+	const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+		if (e.target.files && e.target.files[0]) {
+			setImageFile(e.target.files[0]);
+			setUseFile(true);
+			setForm((f) => ({ ...f, imageUrl: "" }));
+		}
+	};
+
+	const handleImageUrlChange = (e: ChangeEvent<HTMLInputElement>) => {
+		setForm((f) => ({ ...f, imageUrl: e.target.value }));
+		setUseFile(false);
+		setImageFile(null);
+	};
+
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		setSubmitting(true);
 		setError(null);
+		let imageUrl = form.imageUrl;
 		try {
+			if (useFile && imageFile) {
+				// Upload image file to /api/upload (to be implemented)
+				const data = new FormData();
+				data.append("file", imageFile);
+				const uploadRes = await fetch("/api/upload", {
+					method: "POST",
+					body: data,
+				});
+				if (!uploadRes.ok) throw new Error("Image upload failed");
+				const uploadData = await uploadRes.json();
+				imageUrl = uploadData.url;
+			}
+			const payload = { ...form, imageUrl };
 			if (editId) {
 				// Update
 				const res = await fetch(`/api/news?id=${editId}`, {
 					method: "PUT",
 					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify(form),
+					body: JSON.stringify(payload),
 				});
 				if (!res.ok) throw new Error("Failed to update news post");
 				const updated = await res.json();
@@ -86,7 +121,7 @@ export default function AdminNewsPage() {
 				const res = await fetch("/api/news", {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify(form),
+					body: JSON.stringify(payload),
 				});
 				if (!res.ok) throw new Error("Failed to create news post");
 				const created = await res.json();
@@ -221,16 +256,49 @@ export default function AdminNewsPage() {
 							/>
 						</div>
 						<div>
-							<label className="block mb-1 font-medium">Image URL</label>
-							<input
-								type="url"
-								className="w-full border rounded px-3 py-2"
-								value={form.imageUrl}
-								onChange={(e) =>
-									setForm((f) => ({ ...f, imageUrl: e.target.value }))
-								}
-								placeholder="https://example.com/image.jpg"
-							/>
+							<label className="block mb-1 font-medium">Image</label>
+							<div className="flex gap-2 items-center">
+								<input
+									type="radio"
+									id="url"
+									name="imageType"
+									checked={!useFile}
+									onChange={() => {
+										setUseFile(false);
+										setImageFile(null);
+									}}
+								/>
+								<label htmlFor="url" className="mr-2">
+									Use Image URL
+								</label>
+								<input
+									type="radio"
+									id="file"
+									name="imageType"
+									checked={useFile}
+									onChange={() => {
+										setUseFile(true);
+										setForm((f) => ({ ...f, imageUrl: "" }));
+									}}
+								/>
+								<label htmlFor="file">Upload Image</label>
+							</div>
+							{!useFile ? (
+								<input
+									type="url"
+									className="w-full border rounded px-3 py-2 mt-2"
+									value={form.imageUrl}
+									onChange={handleImageUrlChange}
+									placeholder="https://example.com/image.jpg"
+								/>
+							) : (
+								<input
+									type="file"
+									accept="image/*"
+									className="w-full mt-2"
+									onChange={handleFileChange}
+								/>
+							)}
 						</div>
 						<div className="flex gap-2 justify-end">
 							<button
