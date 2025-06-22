@@ -24,6 +24,14 @@ export default function AdminUsersPage() {
 		open: boolean;
 		id: number | null;
 	}>({ open: false, id: null });
+	const [showActionDialog, setShowActionDialog] = useState<{
+		open: boolean;
+		type: "create" | "update" | null;
+	}>({
+		open: false,
+		type: null,
+	});
+	const [pendingForm, setPendingForm] = useState<typeof form | null>(null);
 
 	const handleAdd = () => {
 		setForm({ name: "", email: "" });
@@ -48,19 +56,25 @@ export default function AdminUsersPage() {
 		});
 		setShowDeleteDialog({ open: false, id: null });
 	};
-	const handleSubmit = (e: React.FormEvent) => {
-		e.preventDefault();
-		if (editId) {
+	const handleFormSubmit = (type: "create" | "update") => {
+		setShowActionDialog({ open: true, type });
+		setPendingForm({ ...form });
+	};
+	const confirmAction = () => {
+		if (!showActionDialog.type || !pendingForm) return;
+		if (showActionDialog.type === "update" && editId) {
 			setAdmins(
-				admins.map((a) => (a.id === editId ? { ...a, ...form } : a))
+				admins.map((a) =>
+					a.id === editId ? { ...a, ...pendingForm } : a
+				)
 			);
 			toast({
 				title: "Admin updated",
 				description: "The admin user was updated successfully.",
 				variant: "default",
 			});
-		} else {
-			setAdmins([...admins, { ...form, id: Date.now() }]);
+		} else if (showActionDialog.type === "create") {
+			setAdmins([...admins, { ...pendingForm, id: Date.now() }]);
 			toast({
 				title: "Admin created",
 				description: "The admin user was created successfully.",
@@ -68,6 +82,8 @@ export default function AdminUsersPage() {
 			});
 		}
 		setShowForm(false);
+		setShowActionDialog({ open: false, type: null });
+		setPendingForm(null);
 	};
 
 	return (
@@ -137,7 +153,10 @@ export default function AdminUsersPage() {
 			{showForm && (
 				<div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
 					<form
-						onSubmit={handleSubmit}
+						onSubmit={(e) => {
+							e.preventDefault();
+							handleFormSubmit(editId ? "update" : "create");
+						}}
 						className="bg-white dark:bg-neutral-900 rounded-xl shadow-lg p-8 w-full max-w-md"
 					>
 						<h2 className="text-xl font-bold mb-4">
@@ -208,6 +227,41 @@ export default function AdminUsersPage() {
 						<button
 							className="bg-muted text-muted-foreground px-4 py-2 rounded font-semibold hover:bg-muted/80 transition"
 							onClick={() => setShowDeleteDialog({ open: false, id: null })}
+						>
+							Cancel
+						</button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
+			{/* Create/Update Confirmation Dialog */}
+			<Dialog
+				open={showActionDialog.open}
+				onOpenChange={(open) =>
+					setShowActionDialog((s) => ({ ...s, open }))
+				}
+			>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>
+							Are you sure you want to{" "}
+							{showActionDialog.type === "create"
+								? "create"
+								: "update"}{" "}
+							this admin user?
+						</DialogTitle>
+					</DialogHeader>
+					<DialogFooter>
+						<button
+							className="bg-destructive text-white px-4 py-2 rounded font-semibold hover:bg-red-700 transition"
+							onClick={confirmAction}
+						>
+							Yes
+						</button>
+						<button
+							className="bg-muted text-muted-foreground px-4 py-2 rounded font-semibold hover:bg-muted/80 transition"
+							onClick={() =>
+								setShowActionDialog({ open: false, type: null })
+							}
 						>
 							Cancel
 						</button>

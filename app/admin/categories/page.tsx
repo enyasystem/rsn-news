@@ -17,6 +17,8 @@ export default function AdminCategoriesPage() {
   const [form, setForm] = useState({ name: "" });
   const [submitting, setSubmitting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState<{ open: boolean; id: number | null }>({ open: false, id: null });
+  const [showActionDialog, setShowActionDialog] = useState<{ open: boolean; type: 'create' | 'update' | null }>({ open: false, type: null });
+  const [pendingForm, setPendingForm] = useState<typeof form | null>(null);
 
   // Fetch categories from API
   const fetchCategories = async () => {
@@ -77,28 +79,30 @@ export default function AdminCategoriesPage() {
       }
     }
   };
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleFormSubmit = (type: 'create' | 'update') => {
+    setShowActionDialog({ open: true, type });
+    setPendingForm({ ...form });
+  };
+  const confirmAction = async () => {
+    if (!showActionDialog.type || !pendingForm) return;
     setSubmitting(true);
     setError(null);
     try {
-      if (editId) {
-        // Update
+      if (showActionDialog.type === 'update' && editId) {
         const res = await fetch(`/api/categories?id=${editId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(form),
+          body: JSON.stringify(pendingForm),
         });
         if (!res.ok) throw new Error("Failed to update category");
         const updated = await res.json();
         setCategories(categories.map((c) => (c.id === editId ? updated : c)));
         toast({ title: "Category updated", description: "The category was updated successfully.", variant: "default" });
-      } else {
-        // Create
+      } else if (showActionDialog.type === 'create') {
         const res = await fetch("/api/categories", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(form),
+          body: JSON.stringify(pendingForm),
         });
         if (!res.ok) throw new Error("Failed to create category");
         const created = await res.json();
@@ -107,10 +111,12 @@ export default function AdminCategoriesPage() {
       }
       setShowForm(false);
     } catch (err: any) {
-      setError(err.message || "Error saving category");
-      toast({ title: "Save failed", description: err.message || "Error saving category", variant: "destructive" });
+      setError(err.message || `Error ${showActionDialog.type === 'create' ? 'creating' : 'updating'} category`);
+      toast({ title: `${showActionDialog.type === 'create' ? 'Create' : 'Update'} failed`, description: err.message || `Error ${showActionDialog.type === 'create' ? 'creating' : 'updating'} category`, variant: "destructive" });
     } finally {
       setSubmitting(false);
+      setShowActionDialog({ open: false, type: null });
+      setPendingForm(null);
     }
   };
 
@@ -154,7 +160,7 @@ export default function AdminCategoriesPage() {
       {/* Modal/Form for Add/Edit */}
       {showForm && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <form onSubmit={handleSubmit} className="bg-white dark:bg-neutral-900 rounded-xl shadow-lg p-8 w-full max-w-md">
+          <form onSubmit={e => { e.preventDefault(); handleFormSubmit(editId ? 'update' : 'create'); }} className="bg-white dark:bg-neutral-900 rounded-xl shadow-lg p-8 w-full max-w-md">
             <h2 className="text-xl font-bold mb-4">{editId ? "Edit Category" : "Add Category"}</h2>
             <div className="mb-4">
               <label className="block mb-1 font-medium">Name</label>
@@ -184,6 +190,30 @@ export default function AdminCategoriesPage() {
             <button
               className="bg-muted text-muted-foreground px-4 py-2 rounded font-semibold hover:bg-muted/80 transition"
               onClick={() => setShowDeleteDialog({ open: false, id: null })}
+              disabled={submitting}
+            >
+              Cancel
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {/* Create/Update Confirmation Dialog */}
+      <Dialog open={showActionDialog.open} onOpenChange={open => setShowActionDialog(s => ({ ...s, open }))}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Are you sure you want to {showActionDialog.type} this category?</DialogTitle>
+          </DialogHeader>
+          <DialogFooter>
+            <button
+              className="bg-destructive text-white px-4 py-2 rounded font-semibold hover:bg-red-700 transition"
+              onClick={confirmAction}
+              disabled={submitting}
+            >
+              Yes
+            </button>
+            <button
+              className="bg-muted text-muted-foreground px-4 py-2 rounded font-semibold hover:bg-muted/80 transition"
+              onClick={() => setShowActionDialog({ open: false, type: null })}
               disabled={submitting}
             >
               Cancel
