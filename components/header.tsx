@@ -27,8 +27,10 @@ export default function Header() {
   const [showSearch, setShowSearch] = useState(false)
   const { theme, setTheme } = useTheme()
   const router = useRouter()
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10)
     }
@@ -107,7 +109,7 @@ export default function Header() {
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
               className="rounded-full"
             >
-              {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+              {mounted && (theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />)}
               <span className="sr-only">Toggle theme</span>
             </Button>
             {/* Hamburger menu for mobile */}

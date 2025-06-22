@@ -40,6 +40,7 @@ export default function AdminNewsPage() {
 		type: null,
 	});
 	const [pendingForm, setPendingForm] = useState<typeof form | null>(null);
+	const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 
 	// Fetch news from API
 	const fetchNews = async () => {
@@ -147,16 +148,36 @@ export default function AdminNewsPage() {
 		let imageUrl = pendingForm.imageUrl;
 		try {
 			if (useFile && imageFile) {
-				// Upload image file to /api/upload (to be implemented)
+				// Upload image file to /api/upload with progress
 				const data = new FormData();
 				data.append("file", imageFile);
-				const uploadRes = await fetch("/api/upload", {
-					method: "POST",
-					body: data,
+
+				await new Promise<void>((resolve, reject) => {
+					const xhr = new XMLHttpRequest();
+					xhr.open("POST", "/api/upload");
+					xhr.upload.onprogress = (event) => {
+						if (event.lengthComputable) {
+							const percent = Math.round((event.loaded / event.total) * 100);
+							setUploadProgress(percent);
+						}
+					};
+					xhr.onload = () => {
+						if (xhr.status >= 200 && xhr.status < 300) {
+							const uploadData = JSON.parse(xhr.responseText);
+							imageUrl = uploadData.url;
+							setUploadProgress(null);
+							resolve();
+						} else {
+							setUploadProgress(null);
+							reject(new Error("Image upload failed"));
+						}
+					};
+					xhr.onerror = () => {
+						setUploadProgress(null);
+						reject(new Error("Image upload failed"));
+					};
+					xhr.send(data);
 				});
-				if (!uploadRes.ok) throw new Error("Image upload failed");
-				const uploadData = await uploadRes.json();
-				imageUrl = uploadData.url;
 			}
 			const payload = { ...pendingForm, imageUrl };
 			if (showActionDialog.type === "update" && editId) {
@@ -192,31 +213,10 @@ export default function AdminNewsPage() {
 			}
 			setShowForm(false);
 		} catch (err: any) {
-			setError(
-				err.message ||
-					`Error ${
-						showActionDialog.type === "create"
-							? "creating"
-							: "updating"
-					} news post`
-			);
-			toast({
-				title: `${
-					showActionDialog.type === "create" ? "Create" : "Update"
-				} failed`,
-				description:
-					err.message ||
-					`Error ${
-						showActionDialog.type === "create"
-							? "creating"
-							: "updating"
-					} news post`,
-				variant: "destructive",
-			});
+			setError(err.message || "Error");
 		} finally {
 			setSubmitting(false);
-			setShowActionDialog({ open: false, type: null });
-			setPendingForm(null);
+			setUploadProgress(null);
 		}
 	};
 
@@ -536,6 +536,20 @@ export default function AdminNewsPage() {
 					</DialogFooter>
 				</DialogContent>
 			</Dialog>
+			{uploadProgress !== null && (
+				<div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
+					<div className="bg-white dark:bg-zinc-900 p-6 rounded-lg shadow-lg w-80 flex flex-col items-center">
+						<div className="mb-2 font-semibold">Uploading Image...</div>
+						<div className="w-full bg-zinc-200 dark:bg-zinc-800 rounded h-3 overflow-hidden mb-2">
+							<div
+								className="bg-blue-600 h-3 rounded"
+								style={{ width: `${uploadProgress}%`, transition: 'width 0.2s' }}
+							/>
+						</div>
+						<div className="text-xs text-zinc-600 dark:text-zinc-300">{uploadProgress}%</div>
+					</div>
+				</div>
+			)}
 		</div>
 	);
 }

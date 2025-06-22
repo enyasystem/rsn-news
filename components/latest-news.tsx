@@ -22,10 +22,13 @@ export function LatestNews() {
       setError(null)
       try {
         const data = await fetchLatestNews("all", 5)
-        setArticles(data)
+        console.log("Fetched latest news data:", data)
+        if (Array.isArray(data) && data.length > 0) {
+          setArticles(data)
+        }
       } catch (error) {
         console.error("Error fetching latest news:", error)
-        setError("Failed to load latest news.")
+        setError("Failed to load latest news. Please try again later. " + (error instanceof Error ? error.message : String(error)))
       } finally {
         setLoading(false)
       }
@@ -34,7 +37,7 @@ export function LatestNews() {
     loadLatestNews()
   }, [])
 
-  if (loading) {
+  if (loading && articles.length === 0) {
     return (
       <section>
         <div className="flex items-center justify-between mb-6">
@@ -79,17 +82,7 @@ export function LatestNews() {
     )
   }
 
-  if (error) {
-    return (
-      <Alert variant="destructive" className="my-6">
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Error</AlertTitle>
-        <AlertDescription>{error}</AlertDescription>
-      </Alert>
-    )
-  }
-
-  if (articles.length === 0) {
+  if ((articles == null || articles.length === 0) && !loading) {
     return (
       <section>
         <div className="flex items-center justify-between mb-6">
@@ -101,9 +94,6 @@ export function LatestNews() {
       </section>
     )
   }
-
-  const featuredArticle = articles[0]
-  const otherArticles = articles.slice(1, 5)
 
   return (
     <section>
@@ -117,22 +107,26 @@ export function LatestNews() {
           <ChevronRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
         </Link>
       </div>
-
+      {error && (
+        <Alert variant="destructive" className="my-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
       <div className="grid grid-cols-1 gap-8">
         {/* Featured Article */}
-        <a href={featuredArticle.sourceUrl} target="_blank" rel="noopener noreferrer" className="block">
-          <FeaturedNewsCard article={featuredArticle} />
+        <a href={articles[0].sourceUrl} target="_blank" rel="noopener noreferrer" className="block">
+          <FeaturedNewsCard article={articles[0]} />
         </a>
-
         {/* Other Articles */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {otherArticles.map((article) => (
+          {articles.slice(1, 5).map((article) => (
             <a key={article.id} href={article.sourceUrl} target="_blank" rel="noopener noreferrer" className="block">
               <NewsCard article={article} />
             </a>
           ))}
         </div>
-
         <div className="text-center mt-4">
           <Button
             variant="outline"
