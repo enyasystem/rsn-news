@@ -251,7 +251,10 @@ export default function AdminNewsPage() {
 				const uploadData = await uploadRes.json();
 				imageUrl = uploadData.url;
 			}
-			const payload = { ...form, imageUrl };
+			// Generate slug for new posts or if title changed
+			const uniqueId = Date.now().toString();
+			const slug = createSlug(form.title, uniqueId);
+			const payload = { ...form, imageUrl, slug };
 			if (editId) {
 				// Update
 				const res = await fetch("/api/news", {
