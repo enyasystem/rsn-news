@@ -52,7 +52,7 @@ export function NewsCard({ article, featured = false }: NewsCardProps) {
                 />
               </div>
               <Badge className="absolute top-3 left-3 bg-[#CC0000] hover:bg-[#AA0000] shadow-md">
-                {article.category}
+                {typeof article.category === "object" && article.category ? article.category.name : article.category}
               </Badge>
               <div className="absolute top-3 right-3 flex gap-2">
                 <Button
@@ -118,7 +118,7 @@ export function NewsCard({ article, featured = false }: NewsCardProps) {
                     />
                   </div>
                   <Badge className="absolute top-3 left-3 bg-[#CC0000] hover:bg-[#AA0000] shadow-md">
-                    {article.category}
+                    {typeof article.category === "object" && article.category ? article.category.name : article.category}
                   </Badge>
                   <div className="absolute top-3 right-3 flex gap-2">
                     <Button
@@ -178,7 +178,7 @@ export function NewsCard({ article, featured = false }: NewsCardProps) {
                   />
                 </div>
                 <Badge className="absolute top-3 left-3 bg-[#CC0000] hover:bg-[#AA0000] shadow-md">
-                  {article.category}
+                  {typeof article.category === "object" && article.category ? article.category.name : article.category}
                 </Badge>
                 <div className="absolute top-3 right-3 flex gap-2">
                   <Button
@@ -238,7 +238,7 @@ export function NewsCard({ article, featured = false }: NewsCardProps) {
                 />
               </div>
               <Badge className="absolute top-3 left-3 bg-[#CC0000] hover:bg-[#AA0000] shadow-md">
-                {article.category}
+                {typeof article.category === "object" && article.category ? article.category.name : article.category}
               </Badge>
               <div className="absolute top-3 right-3 flex gap-2">
                 <Button
