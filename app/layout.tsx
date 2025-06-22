@@ -19,7 +19,7 @@ export const metadata = {
     description: "Beyond Headlines - Your trusted source for Nigerian news and global updates",
     images: [
       {
-        url: "/placeholder-logo.svg",
+        url: "/RSN NEWS.jpg",
         width: 215,
         height: 48,
         alt: "RSN NEWS Logo"
@@ -32,7 +32,7 @@ export const metadata = {
     description: "Beyond Headlines - Your trusted source for Nigerian news and global updates",
     images: [
       {
-        url: "/placeholder-logo.svg",
+        url: "/RSN NEWS.jpg",
         width: 215,
         height: 48,
         alt: "RSN NEWS Logo"
