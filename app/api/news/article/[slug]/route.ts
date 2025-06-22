@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server"
 import { getArticleBySlug } from "@/lib/news-api"
 
-export async function GET(request: Request, { params }: { params: { slug: string } }) {
-  const slug = params.slug
+export async function GET(request: Request, { params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
 
   try {
     const article = await getArticleBySlug(slug)
