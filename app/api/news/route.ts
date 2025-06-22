@@ -9,19 +9,19 @@ export async function GET() {
 
 // POST create news
 export async function POST(req: Request) {
-  const { title, content, imageUrl, categoryId, authorId } = await req.json();
+  const { title, content, imageUrl, categoryId, authorId, slug } = await req.json();
   const news = await prisma.news.create({
-    data: { title, content, imageUrl, categoryId, authorId },
+    data: { title, content, imageUrl, categoryId, authorId, slug },
   });
   return NextResponse.json(news);
 }
 
 // PUT update news
 export async function PUT(req: Request) {
-  const { id, title, content, imageUrl, categoryId, authorId } = await req.json();
+  const { id, title, content, imageUrl, categoryId, authorId, slug } = await req.json();
   const news = await prisma.news.update({
     where: { id },
-    data: { title, content, imageUrl, categoryId, authorId },
+    data: { title, content, imageUrl, categoryId, authorId, slug },
   });
   return NextResponse.json(news);
 }

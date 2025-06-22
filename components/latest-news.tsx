@@ -126,15 +126,11 @@ export function LatestNews() {
       )}
       <div className="grid grid-cols-1 gap-8">
         {/* Featured Article */}
-        <a href={articles[0].sourceUrl} target="_blank" rel="noopener noreferrer" className="block">
-          <FeaturedNewsCard article={articles[0]} />
-        </a>
+        <FeaturedNewsCard article={articles[0]} />
         {/* Other Articles */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {articles.slice(1, 5).map((article) => (
-            <a key={article.id} href={article.sourceUrl} target="_blank" rel="noopener noreferrer" className="block">
-              <NewsCard article={article} />
-            </a>
+            <NewsCard key={article.id} article={article} />
           ))}
         </div>
         <div className="text-center mt-4">

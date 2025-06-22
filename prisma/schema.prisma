@@ -26,6 +26,7 @@ model Admin {
 model News {
   id         Int      @id @default(autoincrement())
   title      String
+  slug       String   @unique
   content    String
   imageUrl   String?
   createdAt  DateTime @default(now())

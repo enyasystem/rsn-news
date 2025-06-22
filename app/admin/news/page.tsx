@@ -42,6 +42,18 @@ export default function AdminNewsPage() {
 	const [pendingForm, setPendingForm] = useState<typeof form | null>(null);
 	const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 
+	// Helper: createSlug
+	function createSlug(title: string, id: string): string {
+		const baseSlug = title
+			.toLowerCase()
+			.replace(/[^\w\s-]/g, "")
+			.replace(/\s+/g, "-")
+			.replace(/-+/g, "-")
+			.trim();
+		const uniqueId = id.replace(/[^\w]/g, "").substring(0, 8);
+		return `${baseSlug}-${uniqueId}`;
+	}
+
 	// Fetch news from API
 	const fetchNews = async () => {
 		setLoading(true);
@@ -172,7 +184,10 @@ export default function AdminNewsPage() {
 					xhr.send(data);
 				});
 			}
-			const payload = { ...form, imageUrl };
+			// Generate slug for new posts or if title changed
+			const uniqueId = Date.now().toString();
+			const slug = createSlug(form.title, uniqueId);
+			const payload = { ...form, imageUrl, slug };
 			if (type === "update" && editId) {
 				// Update
 				const res = await fetch("/api/news", {
