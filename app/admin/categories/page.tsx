@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle } from "@/components/ui/dialog";
 
 interface Category {
   id: number;
@@ -15,6 +16,7 @@ export default function AdminCategoriesPage() {
   const [editId, setEditId] = useState<number | null>(null);
   const [form, setForm] = useState({ name: "" });
   const [submitting, setSubmitting] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState<{ open: boolean; id: number | null }>({ open: false, id: null });
 
   // Fetch categories from API
   const fetchCategories = async () => {
@@ -46,18 +48,21 @@ export default function AdminCategoriesPage() {
     setEditId(item.id);
     setShowForm(true);
   };
-  const handleDelete = async (id: number) => {
-    if (!confirm("Are you sure you want to delete this category?")) return;
+  const handleDelete = (id: number) => {
+    setShowDeleteDialog({ open: true, id });
+  };
+  const confirmDelete = async () => {
+    if (!showDeleteDialog.id) return;
     setSubmitting(true);
     let toastShown = false;
     try {
       const res = await fetch(`/api/categories`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
+        body: JSON.stringify({ id: showDeleteDialog.id }),
       });
       if (!res.ok) throw new Error("Failed to delete category");
-      setCategories(categories.filter((c) => c.id !== id));
+      setCategories(categories.filter((c) => c.id !== showDeleteDialog.id));
       toast({ title: "Category deleted", description: "The category was deleted successfully.", variant: "default" });
       toastShown = true;
     } catch (err: any) {
@@ -66,6 +71,7 @@ export default function AdminCategoriesPage() {
       toastShown = true;
     } finally {
       setSubmitting(false);
+      setShowDeleteDialog({ open: false, id: null });
       if (!toastShown) {
         toast({ title: "Delete failed", description: "Unknown error occurred while deleting category.", variant: "destructive" });
       }
@@ -161,6 +167,30 @@ export default function AdminCategoriesPage() {
           </form>
         </div>
       )}
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={showDeleteDialog.open} onOpenChange={open => setShowDeleteDialog(s => ({ ...s, open }))}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Are you sure you want to delete this category?</DialogTitle>
+          </DialogHeader>
+          <DialogFooter>
+            <button
+              className="bg-destructive text-white px-4 py-2 rounded font-semibold hover:bg-red-700 transition"
+              onClick={confirmDelete}
+              disabled={submitting}
+            >
+              Yes
+            </button>
+            <button
+              className="bg-muted text-muted-foreground px-4 py-2 rounded font-semibold hover:bg-muted/80 transition"
+              onClick={() => setShowDeleteDialog({ open: false, id: null })}
+              disabled={submitting}
+            >
+              Cancel
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

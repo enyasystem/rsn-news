@@ -2,6 +2,13 @@
 
 import React, { useState, useEffect, ChangeEvent } from "react";
 import { toast } from "@/hooks/use-toast";
+import {
+	Dialog,
+	DialogContent,
+	DialogHeader,
+	DialogFooter,
+	DialogTitle,
+} from "@/components/ui/dialog";
 
 interface NewsItem {
 	id: number;
@@ -21,6 +28,18 @@ export default function AdminNewsPage() {
 	const [imageFile, setImageFile] = useState<File | null>(null);
 	const [useFile, setUseFile] = useState(false);
 	const [submitting, setSubmitting] = useState(false);
+	const [showDeleteDialog, setShowDeleteDialog] = useState<{
+		open: boolean;
+		id: number | null;
+	}>({ open: false, id: null });
+	const [showActionDialog, setShowActionDialog] = useState<{
+		open: boolean;
+		type: "create" | "update" | null;
+	}>({
+		open: false,
+		type: null,
+	});
+	const [pendingForm, setPendingForm] = useState<typeof form | null>(null);
 
 	// Fetch news from API
 	const fetchNews = async () => {
@@ -60,18 +79,21 @@ export default function AdminNewsPage() {
 		setEditId(item.id);
 		setShowForm(true);
 	};
-	const handleDelete = async (id: number) => {
-		if (!confirm("Are you sure you want to delete this news post?")) return;
+	const handleDelete = (id: number) => {
+		setShowDeleteDialog({ open: true, id });
+	};
+	const confirmDelete = async () => {
+		if (!showDeleteDialog.id) return;
 		setSubmitting(true);
 		let toastShown = false;
 		try {
 			const res = await fetch(`/api/news`, {
 				method: "DELETE",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ id }),
+				body: JSON.stringify({ id: showDeleteDialog.id }),
 			});
 			if (!res.ok) throw new Error("Failed to delete news post");
-			setNews(news.filter((n) => n.id !== id));
+			setNews(news.filter((n) => n.id !== showDeleteDialog.id));
 			toast({
 				title: "News deleted",
 				description: "The news post was deleted successfully.",
@@ -88,6 +110,7 @@ export default function AdminNewsPage() {
 			toastShown = true;
 		} finally {
 			setSubmitting(false);
+			setShowDeleteDialog({ open: false, id: null });
 			if (!toastShown) {
 				toast({
 					title: "Delete failed",
@@ -110,6 +133,91 @@ export default function AdminNewsPage() {
 		setForm((f) => ({ ...f, imageUrl: e.target.value }));
 		setUseFile(false);
 		setImageFile(null);
+	};
+
+	const handleFormSubmit = (type: "create" | "update") => {
+		setShowActionDialog({ open: true, type });
+		setPendingForm({ ...form });
+	};
+
+	const confirmAction = async () => {
+		if (!showActionDialog.type || !pendingForm) return;
+		setSubmitting(true);
+		setError(null);
+		let imageUrl = pendingForm.imageUrl;
+		try {
+			if (useFile && imageFile) {
+				// Upload image file to /api/upload (to be implemented)
+				const data = new FormData();
+				data.append("file", imageFile);
+				const uploadRes = await fetch("/api/upload", {
+					method: "POST",
+					body: data,
+				});
+				if (!uploadRes.ok) throw new Error("Image upload failed");
+				const uploadData = await uploadRes.json();
+				imageUrl = uploadData.url;
+			}
+			const payload = { ...pendingForm, imageUrl };
+			if (showActionDialog.type === "update" && editId) {
+				// Update
+				const res = await fetch("/api/news", {
+					method: "PUT",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ id: editId, ...payload }),
+				});
+				if (!res.ok) throw new Error("Failed to update news post");
+				const updated = await res.json();
+				setNews(news.map((n) => (n.id === editId ? updated : n)));
+				toast({
+					title: "News updated",
+					description: "The news post was updated successfully.",
+					variant: "default",
+				});
+			} else if (showActionDialog.type === "create") {
+				// Create
+				const res = await fetch("/api/news", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify(payload),
+				});
+				if (!res.ok) throw new Error("Failed to create news post");
+				const created = await res.json();
+				setNews([...news, created]);
+				toast({
+					title: "News created",
+					description: "The news post was created successfully.",
+					variant: "default",
+				});
+			}
+			setShowForm(false);
+		} catch (err: any) {
+			setError(
+				err.message ||
+					`Error ${
+						showActionDialog.type === "create"
+							? "creating"
+							: "updating"
+					} news post`
+			);
+			toast({
+				title: `${
+					showActionDialog.type === "create" ? "Create" : "Update"
+				} failed`,
+				description:
+					err.message ||
+					`Error ${
+						showActionDialog.type === "create"
+							? "creating"
+							: "updating"
+					} news post`,
+				variant: "destructive",
+			});
+		} finally {
+			setSubmitting(false);
+			setShowActionDialog({ open: false, type: null });
+			setPendingForm(null);
+		}
 	};
 
 	const handleSubmit = async (e: React.FormEvent) => {
@@ -266,7 +374,10 @@ export default function AdminNewsPage() {
 			{showForm && (
 				<div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
 					<form
-						onSubmit={handleSubmit}
+						onSubmit={(e) => {
+							e.preventDefault();
+							handleFormSubmit(editId ? "update" : "create");
+						}}
 						className="bg-white dark:bg-neutral-900 rounded-xl shadow-lg p-8 w-full max-w-md space-y-4"
 					>
 						<h2 className="text-xl font-bold mb-4">
@@ -359,6 +470,72 @@ export default function AdminNewsPage() {
 					</form>
 				</div>
 			)}
+			{/* Delete Confirmation Dialog */}
+			<Dialog
+				open={showDeleteDialog.open}
+				onOpenChange={(open) =>
+					setShowDeleteDialog((s) => ({ ...s, open }))
+				}
+			>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>
+							Are you sure you want to delete this news post?
+						</DialogTitle>
+					</DialogHeader>
+					<DialogFooter>
+						<button
+							className="bg-destructive text-white px-4 py-2 rounded font-semibold hover:bg-red-700 transition"
+							onClick={confirmDelete}
+							disabled={submitting}
+						>
+							Yes
+						</button>
+						<button
+							className="bg-muted text-muted-foreground px-4 py-2 rounded font-semibold hover:bg-muted/80 transition"
+							onClick={() => setShowDeleteDialog({ open: false, id: null })}
+							disabled={submitting}
+						>
+							Cancel
+						</button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
+			{/* Create/Update Confirmation Dialog */}
+			<Dialog
+				open={showActionDialog.open}
+				onOpenChange={(open) =>
+					setShowActionDialog((s) => ({ ...s, open }))
+				}
+			>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>
+							Are you sure you want to{" "}
+							{showActionDialog.type === "create"
+								? "create"
+								: "update"}{" "}
+							this news post?
+						</DialogTitle>
+					</DialogHeader>
+					<DialogFooter>
+						<button
+							className="bg-destructive text-white px-4 py-2 rounded font-semibold hover:bg-red-700 transition"
+							onClick={confirmAction}
+							disabled={submitting}
+						>
+							Yes
+						</button>
+						<button
+							className="bg-muted text-muted-foreground px-4 py-2 rounded font-semibold hover:bg-muted/80 transition"
+							onClick={() => setShowActionDialog({ open: false, type: null })}
+							disabled={submitting}
+						>
+							Cancel
+						</button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 		</div>
 	);
 }

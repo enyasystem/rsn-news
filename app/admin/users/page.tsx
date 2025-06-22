@@ -1,6 +1,13 @@
 "use client";
 import React, { useState } from "react";
 import { toast } from "@/hooks/use-toast";
+import {
+	Dialog,
+	DialogContent,
+	DialogHeader,
+	DialogFooter,
+	DialogTitle,
+} from "@/components/ui/dialog";
 
 // Dummy data for demonstration
 const initialAdmins = [
@@ -13,6 +20,10 @@ export default function AdminUsersPage() {
 	const [showForm, setShowForm] = useState(false);
 	const [editId, setEditId] = useState<number | null>(null);
 	const [form, setForm] = useState({ name: "", email: "" });
+	const [showDeleteDialog, setShowDeleteDialog] = useState<{
+		open: boolean;
+		id: number | null;
+	}>({ open: false, id: null });
 
 	const handleAdd = () => {
 		setForm({ name: "", email: "" });
@@ -25,12 +36,17 @@ export default function AdminUsersPage() {
 		setShowForm(true);
 	};
 	const handleDelete = (id: number) => {
-		setAdmins(admins.filter((a) => a.id !== id));
+		setShowDeleteDialog({ open: true, id });
+	};
+	const confirmDelete = () => {
+		if (!showDeleteDialog.id) return;
+		setAdmins(admins.filter((a) => a.id !== showDeleteDialog.id));
 		toast({
 			title: "Admin deleted",
 			description: "The admin user was deleted successfully.",
 			variant: "default",
 		});
+		setShowDeleteDialog({ open: false, id: null });
 	};
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
@@ -169,6 +185,35 @@ export default function AdminUsersPage() {
 					</form>
 				</div>
 			)}
+			{/* Delete Confirmation Dialog */}
+			<Dialog
+				open={showDeleteDialog.open}
+				onOpenChange={(open) =>
+					setShowDeleteDialog((s) => ({ ...s, open }))
+				}
+			>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>
+							Are you sure you want to delete this admin user?
+						</DialogTitle>
+					</DialogHeader>
+					<DialogFooter>
+						<button
+							className="bg-destructive text-white px-4 py-2 rounded font-semibold hover:bg-red-700 transition"
+							onClick={confirmDelete}
+						>
+							Yes
+						</button>
+						<button
+							className="bg-muted text-muted-foreground px-4 py-2 rounded font-semibold hover:bg-muted/80 transition"
+							onClick={() => setShowDeleteDialog({ open: false, id: null })}
+						>
+							Cancel
+						</button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 		</div>
 	);
 }
