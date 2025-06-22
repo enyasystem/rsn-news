@@ -1,6 +1,7 @@
 "use client"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { toast } from "@/hooks/use-toast"
 
 export default function AdminLogin({ onLogin }: { onLogin?: () => void }) {
   const [email, setEmail] = useState("")
@@ -22,12 +23,22 @@ export default function AdminLogin({ onLogin }: { onLogin?: () => void }) {
       const data = await res.json()
       if (!res.ok) {
         setError(data.error || "Login failed")
+        toast({
+          title: "Login failed",
+          description: data.error || "Login failed",
+          variant: "destructive",
+        })
       } else {
         // Save session to localStorage for dashboard access
         if (typeof window !== "undefined") {
           localStorage.setItem("admin_session", JSON.stringify(data.user))
         }
         if (onLogin) onLogin()
+        toast({
+          title: "Login successful",
+          description: "Welcome back!",
+          variant: "default",
+        })
         router.push("/admin") // Redirect to dashboard after login
       }
     } catch (err: any) {

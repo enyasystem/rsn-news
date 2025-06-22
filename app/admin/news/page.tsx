@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, ChangeEvent } from "react";
+import { toast } from "@/hooks/use-toast";
 
 interface NewsItem {
 	id: number;
@@ -66,8 +67,18 @@ export default function AdminNewsPage() {
 			const res = await fetch(`/api/news?id=${id}`, { method: "DELETE" });
 			if (!res.ok) throw new Error("Failed to delete news post");
 			setNews(news.filter((n) => n.id !== id));
+			toast({
+				title: "News deleted",
+				description: "The news post was deleted successfully.",
+				variant: "default",
+			});
 		} catch (err: any) {
 			setError(err.message || "Error deleting news post");
+			toast({
+				title: "Delete failed",
+				description: err.message || "Error deleting news post",
+				variant: "destructive",
+			});
 		} finally {
 			setSubmitting(false);
 		}
@@ -116,6 +127,11 @@ export default function AdminNewsPage() {
 				if (!res.ok) throw new Error("Failed to update news post");
 				const updated = await res.json();
 				setNews(news.map((n) => (n.id === editId ? updated : n)));
+				toast({
+					title: "News updated",
+					description: "The news post was updated successfully.",
+					variant: "default",
+				});
 			} else {
 				// Create
 				const res = await fetch("/api/news", {
@@ -126,10 +142,20 @@ export default function AdminNewsPage() {
 				if (!res.ok) throw new Error("Failed to create news post");
 				const created = await res.json();
 				setNews([...news, created]);
+				toast({
+					title: "News created",
+					description: "The news post was created successfully.",
+					variant: "default",
+				});
 			}
 			setShowForm(false);
 		} catch (err: any) {
 			setError(err.message || "Error saving news post");
+			toast({
+				title: "Save failed",
+				description: err.message || "Error saving news post",
+				variant: "destructive",
+			});
 		} finally {
 			setSubmitting(false);
 		}

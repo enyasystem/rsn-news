@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { toast } from "@/hooks/use-toast";
 
 export default function AdminProfilePage() {
   const [form, setForm] = useState({
@@ -51,8 +52,10 @@ export default function AdminProfilePage() {
       if (!res.ok) throw new Error("Failed to update profile");
       setSubmitSuccess("Profile updated successfully!");
       setForm((f) => ({ ...f, password: "" }));
+      toast({ title: "Profile updated", description: "Your profile was updated successfully.", variant: "default" });
     } catch (err: any) {
       setSubmitError(err.message || "Error updating profile");
+      toast({ title: "Update failed", description: err.message || "Error updating profile", variant: "destructive" });
     } finally {
       setSubmitLoading(false);
     }

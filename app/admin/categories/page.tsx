@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { toast } from "@/hooks/use-toast";
 
 interface Category {
   id: number;
@@ -52,8 +53,10 @@ export default function AdminCategoriesPage() {
       const res = await fetch(`/api/categories?id=${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Failed to delete category");
       setCategories(categories.filter((c) => c.id !== id));
+      toast({ title: "Category deleted", description: "The category was deleted successfully.", variant: "default" });
     } catch (err: any) {
       setError(err.message || "Error deleting category");
+      toast({ title: "Delete failed", description: err.message || "Error deleting category", variant: "destructive" });
     } finally {
       setSubmitting(false);
     }
@@ -73,6 +76,7 @@ export default function AdminCategoriesPage() {
         if (!res.ok) throw new Error("Failed to update category");
         const updated = await res.json();
         setCategories(categories.map((c) => (c.id === editId ? updated : c)));
+        toast({ title: "Category updated", description: "The category was updated successfully.", variant: "default" });
       } else {
         // Create
         const res = await fetch("/api/categories", {
@@ -83,10 +87,12 @@ export default function AdminCategoriesPage() {
         if (!res.ok) throw new Error("Failed to create category");
         const created = await res.json();
         setCategories([...categories, created]);
+        toast({ title: "Category created", description: "The category was created successfully.", variant: "default" });
       }
       setShowForm(false);
     } catch (err: any) {
       setError(err.message || "Error saving category");
+      toast({ title: "Save failed", description: err.message || "Error saving category", variant: "destructive" });
     } finally {
       setSubmitting(false);
     }
