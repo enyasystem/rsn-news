@@ -108,10 +108,10 @@ export default function AdminNewsPage() {
 			const payload = { ...form, imageUrl };
 			if (editId) {
 				// Update
-				const res = await fetch(`/api/news?id=${editId}`, {
+				const res = await fetch("/api/news", {
 					method: "PUT",
 					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify(payload),
+					body: JSON.stringify({ id: editId, ...payload }),
 				});
 				if (!res.ok) throw new Error("Failed to update news post");
 				const updated = await res.json();
