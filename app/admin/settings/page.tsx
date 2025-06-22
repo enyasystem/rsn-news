@@ -1,5 +1,8 @@
 "use client";
 import React, { useState } from "react";
+import dynamic from "next/dynamic";
+
+const ChangePasswordForm = dynamic(() => import("@/components/admin-change-password-form"), { ssr: false });
 
 export default function AdminSettingsPage() {
   // Example settings state
@@ -99,6 +102,9 @@ export default function AdminSettingsPage() {
           </button>
         </div>
       </form>
+      <div className="mt-10">
+        <ChangePasswordForm />
+      </div>
     </div>
   );
 }
