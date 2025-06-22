@@ -11,15 +11,28 @@ interface OriginalLinkProps {
   iconClassName?: string
   children?: React.ReactNode
   onClick?: (e: React.MouseEvent) => void
+  asSpan?: boolean // If true, render as <span> instead of <a>
 }
 
-export function OriginalLink({ href, className, iconClassName, children, onClick }: OriginalLinkProps) {
+export function OriginalLink({ href, className, iconClassName, children, onClick, asSpan }: OriginalLinkProps) {
   const handleClick = (e: React.MouseEvent) => {
     // Prevent event bubbling if onClick is provided
     if (onClick) {
       e.stopPropagation()
       onClick(e)
     }
+  }
+
+  if (asSpan) {
+    return (
+      <span
+        className={cn("flex items-center hover:underline cursor-pointer", className)}
+        onClick={handleClick}
+      >
+        <ExternalLink className={cn("h-3 w-3 mr-1", iconClassName)} />
+        {children || "Original"}
+      </span>
+    )
   }
 
   return (
