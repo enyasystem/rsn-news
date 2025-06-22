@@ -15,5 +15,15 @@ export async function POST(req: Request) {
     process.env.JWT_SECRET!,
     { expiresIn: '1d' }
   );
-  return NextResponse.json({ token });
+  // Set cookie with best practices, Secure only in production
+  const isProd = process.env.NODE_ENV === 'production';
+  const cookie = `admin_session=${token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=86400${
+    isProd ? '; Secure' : ''
+  }`;
+  const response = NextResponse.json({
+    user: { id: admin.id, name: admin.name, email: admin.email },
+    token
+  });
+  response.headers.append('Set-Cookie', cookie);
+  return response;
 }
