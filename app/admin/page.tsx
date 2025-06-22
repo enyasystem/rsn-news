@@ -1,9 +1,28 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function AdminDashboardPage() {
   const router = useRouter();
+  const [stats, setStats] = useState<{ postCount: number; categoryCount: number } | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchStats() {
+      setLoading(true);
+      try {
+        const res = await fetch("/api/admin/stats");
+        const data = await res.json();
+        setStats(data);
+      } catch {
+        setStats(null);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchStats();
+  }, []);
+
   return (
     <div className="w-full max-w-7xl mx-auto py-6 px-2 sm:px-4 md:px-6 lg:px-8">
       <h1 className="text-2xl md:text-3xl font-bold mb-8 tracking-tight">
@@ -16,7 +35,7 @@ export default function AdminDashboardPage() {
             Total News Posts
           </h2>
           <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
-            --
+            {loading || !stats ? "--" : stats.postCount}
           </p>
         </div>
         <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-md p-6 flex flex-col items-start justify-between min-h-[120px] border border-gray-100 dark:border-neutral-800">
@@ -24,7 +43,7 @@ export default function AdminDashboardPage() {
             Categories
           </h2>
           <p className="text-3xl font-bold text-green-600 dark:text-green-400">
-            --
+            {loading || !stats ? "--" : stats.categoryCount}
           </p>
         </div>
         <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-md p-6 flex flex-col items-start justify-between min-h-[120px] border border-gray-100 dark:border-neutral-800">
