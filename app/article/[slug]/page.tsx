@@ -125,7 +125,9 @@ export default function ArticlePage({ params }: ArticlePageProps) {
                 priority
               />
               <div className="absolute top-4 left-4">
-                <Badge className="bg-[#CC0000] hover:bg-[#AA0000]">{article.category}</Badge>
+                <Badge className="bg-[#CC0000] hover:bg-[#AA0000]">
+                  {typeof article.category === "object" && article.category ? article.category.name : article.category}
+                </Badge>
               </div>
             </div>
 
@@ -152,7 +154,7 @@ export default function ArticlePage({ params }: ArticlePageProps) {
                 {article.category && (
                   <div className="flex items-center">
                     <Tag className="h-4 w-4 mr-1" />
-                    <span>{article.category}</span>
+                    <span>{typeof article.category === "object" && article.category ? article.category.name : article.category}</span>
                   </div>
                 )}
               </div>
