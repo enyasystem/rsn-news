@@ -1,94 +1,34 @@
-import db from '@/lib/db';
-import { randomUUID } from 'crypto';
-import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
+import { NextResponse } from 'next/server';
+import prisma from '@/lib/prisma';
 
-export async function POST(req: NextRequest) {
-  const form = await req.formData();
-  const title = form.get('title') as string;
-  const content = form.get('content') as string;
-  const category = form.get('category') as string;
-  const author_id = form.get('author_id') as string;
-  let image_url = '';
-
-  // Handle image upload (save to /public/images/news/)
-  const image = form.get('image') as File | null;
-  if (image) {
-    const arrayBuffer = await image.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    const ext = image.name.split('.').pop();
-    const fileName = `${Date.now()}-${randomUUID()}.${ext}`;
-    const filePath = `public/images/news/${fileName}`;
-    fs.writeFileSync(filePath, buffer);
-    image_url = `/images/news/${fileName}`;
-  }
-
-  const stmt = db.prepare('INSERT INTO news (title, content, category, image_url, author_id) VALUES (?, ?, ?, ?, ?)');
-  stmt.run(title, content, category, image_url, author_id);
-
-  return NextResponse.json({ success: true });
+// GET all news
+export async function GET() {
+  const news = await prisma.news.findMany({ include: { category: true, author: true } });
+  return NextResponse.json(news);
 }
 
-export async function PUT(req: NextRequest) {
-  const form = await req.formData();
-  const id = form.get('id') as string;
-  const title = form.get('title') as string;
-  const content = form.get('content') as string;
-  const category = form.get('category') as string;
-  let image_url = form.get('image_url') as string;
-
-  // Handle image upload (optional)
-  const image = form.get('image') as File | null;
-  if (image) {
-    const arrayBuffer = await image.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    const ext = image.name.split('.').pop();
-    const fileName = `${Date.now()}-${randomUUID()}.${ext}`;
-    const filePath = `public/images/news/${fileName}`;
-    fs.writeFileSync(filePath, buffer);
-    image_url = `/images/news/${fileName}`;
-  }
-
-  const stmt = db.prepare('UPDATE news SET title=?, content=?, category=?, image_url=? WHERE id=?');
-  stmt.run(title, content, category, image_url, id);
-
-  return NextResponse.json({ success: true });
+// POST create news
+export async function POST(req: Request) {
+  const { title, content, imageUrl, categoryId, authorId } = await req.json();
+  const news = await prisma.news.create({
+    data: { title, content, imageUrl, categoryId, authorId },
+  });
+  return NextResponse.json(news);
 }
 
-export async function DELETE(req: NextRequest) {
+// PUT update news
+export async function PUT(req: Request) {
+  const { id, title, content, imageUrl, categoryId, authorId } = await req.json();
+  const news = await prisma.news.update({
+    where: { id },
+    data: { title, content, imageUrl, categoryId, authorId },
+  });
+  return NextResponse.json(news);
+}
+
+// DELETE news
+export async function DELETE(req: Request) {
   const { id } = await req.json();
-  const stmt = db.prepare('DELETE FROM news WHERE id=?');
-  stmt.run(id);
-  return NextResponse.json({ success: true });
-}
-
-export async function GET(req: NextRequest) {
-  // Parse query params for pagination/limit
-  const { searchParams } = new URL(req.url);
-  const limit = Number.parseInt(searchParams.get('limit') || '10');
-  const page = Number.parseInt(searchParams.get('page') || '1');
-
-  try {
-    // Import fetchLatestNews from your news-api (aggregator)
-    const { fetchNewsFromAllSources } = await import('@/lib/news-api');
-    const allArticles = await fetchNewsFromAllSources();
-    // Sort by published date (newest first)
-    const sorted = allArticles.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
-    // Paginate
-    const start = (page - 1) * limit;
-    const end = start + limit;
-    const articles = sorted.slice(start, end);
-    return NextResponse.json({
-      articles,
-      pagination: {
-        total: allArticles.length,
-        page,
-        limit,
-        pages: Math.ceil(allArticles.length / limit),
-      },
-    });
-  } catch (error) {
-    console.error('Error fetching latest news:', error);
-    return NextResponse.json({ error: 'Failed to fetch latest news', articles: [] }, { status: 500 });
-  }
+  await prisma.news.delete({ where: { id } });
+  return NextResponse.json({ message: 'News deleted' });
 }

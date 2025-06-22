@@ -14,24 +14,39 @@ datasource db {
 }
 
 model Admin {
-  id       Int      @id @default(autoincrement())
-  name     String
-  email    String   @unique
-  password String
-  createdAt DateTime @default(now())
+  id        Int       @id @default(autoincrement())
+  name      String
+  email     String    @unique
+  password  String
+  createdAt DateTime  @default(now())
+  news      News[]    @relation("AdminNews")
+  auditLogs AuditLog[]
 }
 
 model News {
-  id        Int      @id @default(autoincrement())
-  title     String
-  content   String
-  createdAt DateTime @default(now())
-  category  Category? @relation(fields: [categoryId], references: [id])
+  id         Int      @id @default(autoincrement())
+  title      String
+  content    String
+  imageUrl   String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  category   Category? @relation(fields: [categoryId], references: [id])
   categoryId Int?
+  author     Admin?   @relation("AdminNews", fields: [authorId], references: [id])
+  authorId   Int?
 }
 
 model Category {
   id    Int    @id @default(autoincrement())
   name  String @unique
   news  News[]
+}
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  action    String
+  admin     Admin?   @relation(fields: [adminId], references: [id])
+  adminId   Int?
+  createdAt DateTime @default(now())
+  details   String?
 }
