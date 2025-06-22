@@ -17,7 +17,7 @@ export async function POST(req: Request) {
       imageUrl,
       slug,
       category: { connect: { id: categoryId } },
-      // author: authorId ? { connect: { id: authorId } } : undefined,
+      author: authorId ? { connect: { id: authorId } } : undefined,
     },
   });
   return NextResponse.json(news);
