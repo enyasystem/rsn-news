@@ -28,9 +28,12 @@ export function LatestNews() {
         ])
         // If adminNews is an object with 'articles', use that, else assume array
         const adminArticles = Array.isArray(adminNews) ? adminNews : (adminNews.articles || [])
+        // Helper to get a valid date string for sorting
+        const getDate = (item: NewsArticle) =>
+          item.created_at ?? item.pubDate ?? item.publishedAt ?? "1970-01-01T00:00:00Z"
         // Merge: admin news first, then external news, both sorted by date
-        const sortedAdmin = [...adminArticles].sort((a, b) => new Date(b.created_at || b.pubDate).getTime() - new Date(a.created_at || a.pubDate).getTime())
-        const sortedExternal = [...externalNews].sort((a, b) => new Date(b.created_at || b.pubDate).getTime() - new Date(a.created_at || a.pubDate).getTime())
+        const sortedAdmin = [...adminArticles].sort((a, b) => new Date(getDate(b)).getTime() - new Date(getDate(a)).getTime())
+        const sortedExternal = [...externalNews].sort((a, b) => new Date(getDate(b)).getTime() - new Date(getDate(a)).getTime())
         const merged = [...sortedAdmin, ...sortedExternal]
         setArticles(merged)
       } catch (error) {

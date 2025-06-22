@@ -17,6 +17,9 @@ export interface NewsArticle {
   sourceUrl: string
   publishedAt: string
   author?: string
+  // Optional fields for sorting
+  created_at?: string
+  pubDate?: string
 }
 
 // Safely parse a date string and return a valid date or fallback
