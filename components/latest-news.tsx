@@ -28,8 +28,10 @@ export function LatestNews() {
         ])
         // If adminNews is an object with 'articles', use that, else assume array
         const adminArticles = Array.isArray(adminNews) ? adminNews : (adminNews.articles || [])
-        // Merge and sort by date
-        const merged = [...externalNews, ...adminArticles].sort((a, b) => new Date(b.created_at || b.pubDate).getTime() - new Date(a.created_at || a.pubDate).getTime())
+        // Merge: admin news first, then external news, both sorted by date
+        const sortedAdmin = [...adminArticles].sort((a, b) => new Date(b.created_at || b.pubDate).getTime() - new Date(a.created_at || a.pubDate).getTime())
+        const sortedExternal = [...externalNews].sort((a, b) => new Date(b.created_at || b.pubDate).getTime() - new Date(a.created_at || a.pubDate).getTime())
+        const merged = [...sortedAdmin, ...sortedExternal]
         setArticles(merged)
       } catch (error) {
         console.error("Error fetching latest news:", error)
