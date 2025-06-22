@@ -21,11 +21,16 @@ export function LatestNews() {
       setLoading(true)
       setError(null)
       try {
-        const data = await fetchLatestNews("all", 5)
-        console.log("Fetched latest news data:", data)
-        if (Array.isArray(data) && data.length > 0) {
-          setArticles(data)
-        }
+        // Fetch external news and admin news in parallel
+        const [externalNews, adminNews] = await Promise.all([
+          fetchLatestNews("all", 15),
+          fetch("/api/news").then(res => res.ok ? res.json() : [])
+        ])
+        // If adminNews is an object with 'articles', use that, else assume array
+        const adminArticles = Array.isArray(adminNews) ? adminNews : (adminNews.articles || [])
+        // Merge and sort by date
+        const merged = [...externalNews, ...adminArticles].sort((a, b) => new Date(b.created_at || b.pubDate).getTime() - new Date(a.created_at || a.pubDate).getTime())
+        setArticles(merged)
       } catch (error) {
         console.error("Error fetching latest news:", error)
         setError("Failed to load latest news. Please try again later. " + (error instanceof Error ? error.message : String(error)))
