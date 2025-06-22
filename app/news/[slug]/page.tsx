@@ -7,11 +7,12 @@ import { ImageWithFallback } from "@/components/image-with-fallback";
 import { format } from "date-fns";
 
 interface NewsPageProps {
-  params: { slug: string }
+  params: Promise<{ slug: string }>
 }
 
 export async function generateMetadata({ params }: NewsPageProps): Promise<Metadata> {
-  const article = await getArticleBySlug(params.slug);
+  const { slug } = await params;
+  const article = await getArticleBySlug(slug);
   if (!article) return {};
   return {
     title: article.title,
@@ -23,7 +24,8 @@ export async function generateMetadata({ params }: NewsPageProps): Promise<Metad
 }
 
 export default async function NewsPage({ params }: NewsPageProps) {
-  const article = await getArticleBySlug(params.slug);
+  const { slug } = await params;
+  const article = await getArticleBySlug(slug);
   if (!article) return notFound();
 
   return (

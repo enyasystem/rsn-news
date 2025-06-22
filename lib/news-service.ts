@@ -123,9 +123,14 @@ export async function searchNews(
 }
 
 // Get article by slug
-export async function getArticleBySlug(slug: string): Promise<NewsArticle | null> {
+export async function getArticleBySlug(slug: string, baseUrl?: string): Promise<NewsArticle | null> {
   try {
-    const response = await fetch(`/api/news/article/${slug}`, {
+    const url = baseUrl
+      ? `${baseUrl}/api/news/article/${slug}`
+      : typeof window === "undefined"
+        ? `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/api/news/article/${slug}`
+        : `/api/news/article/${slug}`;
+    const response = await fetch(url, {
       next: { revalidate: 300 }, // Revalidate every 5 minutes
     })
 
