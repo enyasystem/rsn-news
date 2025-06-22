@@ -21,14 +21,21 @@ export function NewsCard({ article, featured = false }: NewsCardProps) {
   const isAdminNews = !article.sourceUrl && article.slug;
   const internalLink = isAdminNews ? `/news/${article.slug}` : undefined;
 
+  // Only news sources (with sourceUrl) should be clickable
+  const isNewsSource = !!article.sourceUrl;
+
   return (
     <Card
       className={`overflow-hidden group h-full border border-gray-200 dark:border-gray-800 shadow-md hover:shadow-lg transition-shadow duration-300 ${featured ? "rounded-xl" : "rounded-lg"}`}
     >
       <div className="h-full flex flex-col">
-        {/* Link to internal page for admin news, otherwise to sourceUrl */}
-        {isAdminNews ? (
-          <a href={internalLink} target="_blank" rel="noopener noreferrer" className="block flex-grow">
+        {(isNewsSource || isAdminNews) ? (
+          <a
+            href={isNewsSource ? article.sourceUrl : internalLink}
+            target={isNewsSource ? "_blank" : undefined}
+            rel={isNewsSource ? "noopener noreferrer" : undefined}
+            className="block flex-grow"
+          >
             <div className="relative">
               <div
                 className={`aspect-[16/9] w-full overflow-hidden ${featured ? "aspect-[16/8]" : ""} bg-gray-100 dark:bg-gray-800`}
@@ -87,7 +94,7 @@ export function NewsCard({ article, featured = false }: NewsCardProps) {
             </CardContent>
           </a>
         ) : (
-          <a href={article.sourceUrl} target="_blank" rel="noopener noreferrer" className="block flex-grow">
+          <div className="block flex-grow">
             <div className="relative">
               <div
                 className={`aspect-[16/9] w-full overflow-hidden ${featured ? "aspect-[16/8]" : ""} bg-gray-100 dark:bg-gray-800`}
@@ -144,7 +151,7 @@ export function NewsCard({ article, featured = false }: NewsCardProps) {
               </h3>
               <p className="text-muted-foreground text-xs sm:text-sm mb-3 line-clamp-2">{article.excerpt}</p>
             </CardContent>
-          </a>
+          </div>
         )}
         <div className="px-4 pb-4 mt-auto flex items-center justify-between">
           <div className="flex items-center text-muted-foreground text-xs">
