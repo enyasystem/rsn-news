@@ -11,7 +11,14 @@ export async function GET() {
 export async function POST(req: Request) {
   const { title, content, imageUrl, categoryId, authorId, slug } = await req.json();
   const news = await prisma.news.create({
-    data: { title, content, imageUrl, categoryId, authorId, slug },
+    data: {
+      title,
+      content,
+      imageUrl,
+      slug,
+      category: { connect: { id: categoryId } },
+      // author: authorId ? { connect: { id: authorId } } : undefined,
+    },
   });
   return NextResponse.json(news);
 }

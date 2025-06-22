@@ -18,6 +18,9 @@ interface NewsItem {
 	createdAt?: string;
 }
 
+// Add a hardcoded categoryId for now (replace with your actual categoryId from the DB)
+const HARDCODED_CATEGORY_ID = 6; // Updated to match your real category id
+
 export default function AdminNewsPage() {
 	const [news, setNews] = useState<NewsItem[]>([]);
 	const [loading, setLoading] = useState(false);
@@ -151,7 +154,7 @@ export default function AdminNewsPage() {
 	const handleFormSubmit = async (type: "create" | "update") => {
 		setSubmitting(true);
 		setError(null);
-		let imageUrl = form.imageUrl;
+		let imageUrlLocal = form.imageUrl;
 		try {
 			if (useFile && imageFile) {
 				// Upload image file to /api/upload with progress
@@ -169,7 +172,7 @@ export default function AdminNewsPage() {
 					xhr.onload = () => {
 						if (xhr.status >= 200 && xhr.status < 300) {
 							const uploadData = JSON.parse(xhr.responseText);
-							imageUrl = uploadData.url;
+							imageUrlLocal = uploadData.url;
 							setUploadProgress(null);
 							resolve();
 						} else {
@@ -187,7 +190,7 @@ export default function AdminNewsPage() {
 			// Generate slug for new posts or if title changed
 			const uniqueId = Date.now().toString();
 			const slug = createSlug(form.title, uniqueId);
-			const payload = { ...form, imageUrl, slug };
+			const payload = { ...form, imageUrl: imageUrlLocal, slug, categoryId: HARDCODED_CATEGORY_ID };
 			if (type === "update" && editId) {
 				// Update
 				const res = await fetch("/api/news", {
@@ -237,7 +240,7 @@ export default function AdminNewsPage() {
 		e.preventDefault();
 		setSubmitting(true);
 		setError(null);
-		let imageUrl = form.imageUrl;
+		let imageUrlLocal = form.imageUrl;
 		try {
 			if (useFile && imageFile) {
 				// Upload image file to /api/upload (to be implemented)
@@ -249,12 +252,12 @@ export default function AdminNewsPage() {
 				});
 				if (!uploadRes.ok) throw new Error("Image upload failed");
 				const uploadData = await uploadRes.json();
-				imageUrl = uploadData.url;
+				imageUrlLocal = uploadData.url;
 			}
 			// Generate slug for new posts or if title changed
 			const uniqueId = Date.now().toString();
 			const slug = createSlug(form.title, uniqueId);
-			const payload = { ...form, imageUrl, slug };
+			const payload = { ...form, imageUrl: imageUrlLocal, slug, categoryId: HARDCODED_CATEGORY_ID };
 			if (editId) {
 				// Update
 				const res = await fetch("/api/news", {
