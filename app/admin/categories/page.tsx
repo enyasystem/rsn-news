@@ -1,39 +1,95 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
-// Dummy data for demonstration
-const initialCategories = [
-  { id: 1, name: "Business" },
-  { id: 2, name: "Technology" },
-];
+interface Category {
+  id: number;
+  name: string;
+}
 
 export default function AdminCategoriesPage() {
-  const [categories, setCategories] = useState(initialCategories);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
   const [form, setForm] = useState({ name: "" });
+  const [submitting, setSubmitting] = useState(false);
+
+  // Fetch categories from API
+  const fetchCategories = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/categories");
+      if (!res.ok) throw new Error("Failed to fetch categories");
+      const data = await res.json();
+      setCategories(data);
+    } catch (err: any) {
+      setError(err.message || "Error loading categories");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
 
   const handleAdd = () => {
     setForm({ name: "" });
     setEditId(null);
     setShowForm(true);
   };
-  const handleEdit = (item: any) => {
+  const handleEdit = (item: Category) => {
     setForm({ name: item.name });
     setEditId(item.id);
     setShowForm(true);
   };
-  const handleDelete = (id: number) => {
-    setCategories(categories.filter((c) => c.id !== id));
-  };
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (editId) {
-      setCategories(categories.map((c) => (c.id === editId ? { ...c, ...form } : c)));
-    } else {
-      setCategories([...categories, { ...form, id: Date.now() }]);
+  const handleDelete = async (id: number) => {
+    if (!confirm("Are you sure you want to delete this category?")) return;
+    setSubmitting(true);
+    try {
+      const res = await fetch(`/api/categories?id=${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete category");
+      setCategories(categories.filter((c) => c.id !== id));
+    } catch (err: any) {
+      setError(err.message || "Error deleting category");
+    } finally {
+      setSubmitting(false);
     }
-    setShowForm(false);
+  };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setError(null);
+    try {
+      if (editId) {
+        // Update
+        const res = await fetch(`/api/categories?id=${editId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(form),
+        });
+        if (!res.ok) throw new Error("Failed to update category");
+        const updated = await res.json();
+        setCategories(categories.map((c) => (c.id === editId ? updated : c)));
+      } else {
+        // Create
+        const res = await fetch("/api/categories", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(form),
+        });
+        if (!res.ok) throw new Error("Failed to create category");
+        const created = await res.json();
+        setCategories([...categories, created]);
+      }
+      setShowForm(false);
+    } catch (err: any) {
+      setError(err.message || "Error saving category");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -43,6 +99,7 @@ export default function AdminCategoriesPage() {
         <p className="text-gray-500">View, edit, or delete categories. Click "Add Category" to create a new one.</p>
         <button onClick={handleAdd} className="bg-primary text-primary-foreground font-semibold py-2 px-4 rounded-lg hover:bg-primary/90 transition">Add Category</button>
       </div>
+      {error && <div className="text-red-500 mb-2">{error}</div>}
       <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-md p-0 border border-gray-100 dark:border-neutral-800 overflow-x-auto">
         <table className="min-w-full text-sm">
           <thead>
@@ -52,7 +109,9 @@ export default function AdminCategoriesPage() {
             </tr>
           </thead>
           <tbody>
-            {categories.length === 0 ? (
+            {loading ? (
+              <tr><td colSpan={2} className="text-center text-gray-400 py-8">Loading...</td></tr>
+            ) : categories.length === 0 ? (
               <tr>
                 <td colSpan={2} className="text-center text-gray-400 py-8">No categories yet.</td>
               </tr>
@@ -62,7 +121,7 @@ export default function AdminCategoriesPage() {
                   <td className="p-3">{item.name}</td>
                   <td className="p-3 flex gap-2">
                     <button onClick={() => handleEdit(item)} className="bg-secondary text-secondary-foreground px-3 py-1 rounded hover:bg-secondary/80">Edit</button>
-                    <button onClick={() => handleDelete(item.id)} className="bg-destructive text-destructive-foreground px-3 py-1 rounded hover:bg-destructive/80">Delete</button>
+                    <button onClick={() => handleDelete(item.id)} disabled={submitting} className="bg-destructive text-destructive-foreground px-3 py-1 rounded hover:bg-destructive/80">Delete</button>
                   </td>
                 </tr>
               ))
@@ -81,7 +140,7 @@ export default function AdminCategoriesPage() {
             </div>
             <div className="flex gap-2 justify-end">
               <button type="button" onClick={() => setShowForm(false)} className="bg-muted text-muted-foreground px-4 py-2 rounded hover:bg-muted/80">Cancel</button>
-              <button type="submit" className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-primary/90">{editId ? "Update" : "Create"}</button>
+              <button type="submit" disabled={submitting} className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-primary/90">{editId ? "Update" : "Create"}</button>
             </div>
           </form>
         </div>
