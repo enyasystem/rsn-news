@@ -2,8 +2,15 @@ import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
 export async function middleware(request: NextRequest) {
-  // Get the pathname from the URL
   const { pathname } = request.nextUrl
+
+  // Protect /admin routes (except /admin/login and /admin/register)
+  if (pathname.startsWith("/admin") && !pathname.startsWith("/admin/login") && !pathname.startsWith("/admin/register")) {
+    const adminSession = request.cookies.get("admin_session")?.value
+    if (!adminSession) {
+      return NextResponse.redirect(new URL("/admin/login", request.url))
+    }
+  }
 
   // Check if the request is for an article page
   if (pathname.startsWith("/article/")) {
@@ -50,7 +57,7 @@ export async function middleware(request: NextRequest) {
   return NextResponse.next()
 }
 
-// Configure the middleware to run only for article pages
+// Configure the middleware to run only for admin and article pages
 export const config = {
-  matcher: "/article/:path*",
+  matcher: ["/admin/:path*", "/article/:path*"],
 }

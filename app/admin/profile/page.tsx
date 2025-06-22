@@ -1,17 +1,36 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 export default function AdminProfilePage() {
-  // These would be fetched from session/user context in a real app
   const [form, setForm] = useState({
-    id: 1, // TODO: Replace with real admin id from session
+    id: 1, // Will be set from backend
     name: "",
     email: "",
     password: "",
   });
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState("");
-  const [error, setError] = useState("");
+  const [submitLoading, setSubmitLoading] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState("");
+  const [submitError, setSubmitError] = useState("");
+  const [fetching, setFetching] = useState(true);
+  const [fetchError, setFetchError] = useState("");
+
+  useEffect(() => {
+    // Fetch current admin info from backend
+    async function fetchProfile() {
+      setFetching(true);
+      try {
+        const res = await fetch("/api/admin/profile");
+        if (!res.ok) throw new Error("Failed to fetch profile");
+        const data = await res.json();
+        setForm((f) => ({ ...f, ...data, password: "" }));
+      } catch (err: any) {
+        setFetchError(err.message || "Error loading profile");
+      } finally {
+        setFetching(false);
+      }
+    }
+    fetchProfile();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -20,9 +39,9 @@ export default function AdminProfilePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setSuccess("");
-    setError("");
+    setSubmitLoading(true);
+    setSubmitSuccess("");
+    setSubmitError("");
     try {
       const res = await fetch("/api/admin/profile", {
         method: "PUT",
@@ -30,14 +49,21 @@ export default function AdminProfilePage() {
         body: JSON.stringify(form),
       });
       if (!res.ok) throw new Error("Failed to update profile");
-      setSuccess("Profile updated successfully!");
+      setSubmitSuccess("Profile updated successfully!");
       setForm((f) => ({ ...f, password: "" }));
     } catch (err: any) {
-      setError(err.message || "Error updating profile");
+      setSubmitError(err.message || "Error updating profile");
     } finally {
-      setLoading(false);
+      setSubmitLoading(false);
     }
   };
+
+  if (fetching) {
+    return <div className="text-center py-12 text-gray-400">Loading profile...</div>;
+  }
+  if (fetchError) {
+    return <div className="text-center py-12 text-red-500">{fetchError}</div>;
+  }
 
   return (
     <div>
@@ -56,11 +82,11 @@ export default function AdminProfilePage() {
           <label className="block font-medium mb-1">Password <span className="text-xs text-gray-400">(leave blank to keep current)</span></label>
           <input type="password" name="password" className="w-full border rounded px-3 py-2" value={form.password} onChange={handleChange} autoComplete="new-password" />
         </div>
-        {success && <div className="text-green-600 text-sm">{success}</div>}
-        {error && <div className="text-red-500 text-sm">{error}</div>}
+        {submitSuccess && <div className="text-green-600 text-sm">{submitSuccess}</div>}
+        {submitError && <div className="text-red-500 text-sm">{submitError}</div>}
         <div className="flex justify-end">
-          <button type="submit" className="bg-primary text-primary-foreground px-6 py-2 rounded font-semibold hover:bg-primary/90 transition" disabled={loading}>
-            {loading ? "Saving..." : "Update Profile"}
+          <button type="submit" className="bg-primary text-primary-foreground px-6 py-2 rounded font-semibold hover:bg-primary/90 transition" disabled={submitLoading}>
+            {submitLoading ? "Saving..." : "Update Profile"}
           </button>
         </div>
       </form>
