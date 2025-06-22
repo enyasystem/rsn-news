@@ -71,11 +71,12 @@ export default function AdminSidebar({ className = "" }: { className?: string })
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton
-                onClick={() => {
+                onClick={async () => {
                   if (typeof window !== "undefined") {
                     localStorage.removeItem("admin_session");
+                    await fetch("/api/admin/logout", { method: "POST" });
+                    window.location.href = "/admin-login?logout=1";
                   }
-                  window.location.href = "/admin/logout";
                 }}
                 isActive={false}
               >
