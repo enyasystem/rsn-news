@@ -49,16 +49,26 @@ export default function AdminCategoriesPage() {
   const handleDelete = async (id: number) => {
     if (!confirm("Are you sure you want to delete this category?")) return;
     setSubmitting(true);
+    let toastShown = false;
     try {
-      const res = await fetch(`/api/categories?id=${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/categories`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
       if (!res.ok) throw new Error("Failed to delete category");
       setCategories(categories.filter((c) => c.id !== id));
       toast({ title: "Category deleted", description: "The category was deleted successfully.", variant: "default" });
+      toastShown = true;
     } catch (err: any) {
       setError(err.message || "Error deleting category");
       toast({ title: "Delete failed", description: err.message || "Error deleting category", variant: "destructive" });
+      toastShown = true;
     } finally {
       setSubmitting(false);
+      if (!toastShown) {
+        toast({ title: "Delete failed", description: "Unknown error occurred while deleting category.", variant: "destructive" });
+      }
     }
   };
   const handleSubmit = async (e: React.FormEvent) => {

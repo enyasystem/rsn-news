@@ -63,8 +63,13 @@ export default function AdminNewsPage() {
 	const handleDelete = async (id: number) => {
 		if (!confirm("Are you sure you want to delete this news post?")) return;
 		setSubmitting(true);
+		let toastShown = false;
 		try {
-			const res = await fetch(`/api/news?id=${id}`, { method: "DELETE" });
+			const res = await fetch(`/api/news`, {
+				method: "DELETE",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ id }),
+			});
 			if (!res.ok) throw new Error("Failed to delete news post");
 			setNews(news.filter((n) => n.id !== id));
 			toast({
@@ -72,6 +77,7 @@ export default function AdminNewsPage() {
 				description: "The news post was deleted successfully.",
 				variant: "default",
 			});
+			toastShown = true;
 		} catch (err: any) {
 			setError(err.message || "Error deleting news post");
 			toast({
@@ -79,8 +85,16 @@ export default function AdminNewsPage() {
 				description: err.message || "Error deleting news post",
 				variant: "destructive",
 			});
+			toastShown = true;
 		} finally {
 			setSubmitting(false);
+			if (!toastShown) {
+				toast({
+					title: "Delete failed",
+					description: "Unknown error occurred while deleting news post.",
+					variant: "destructive",
+				});
+			}
 		}
 	};
 
