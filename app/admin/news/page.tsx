@@ -1,40 +1,103 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
-// Dummy data for demonstration
-const initialNews = [
-	{ id: 1, title: "First News Post", date: "2025-06-20" },
-	{ id: 2, title: "Second News Post", date: "2025-06-19" },
-];
+interface NewsItem {
+	id: number;
+	title: string;
+	content: string;
+	imageUrl?: string;
+	createdAt?: string;
+}
 
 export default function AdminNewsPage() {
-	const [news, setNews] = useState(initialNews);
+	const [news, setNews] = useState<NewsItem[]>([]);
+	const [loading, setLoading] = useState(false);
+	const [error, setError] = useState<string | null>(null);
 	const [showForm, setShowForm] = useState(false);
 	const [editId, setEditId] = useState<number | null>(null);
-	const [form, setForm] = useState({ title: "", date: "" });
+	const [form, setForm] = useState({ title: "", content: "", imageUrl: "" });
+	const [submitting, setSubmitting] = useState(false);
+
+	// Fetch news from API
+	const fetchNews = async () => {
+		setLoading(true);
+		setError(null);
+		try {
+			const res = await fetch("/api/news");
+			if (!res.ok) throw new Error("Failed to fetch news");
+			const data = await res.json();
+			setNews(data);
+		} catch (err: any) {
+			setError(err.message || "Error loading news");
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	useEffect(() => {
+		fetchNews();
+	}, []);
 
 	const handleAdd = () => {
-		setForm({ title: "", date: new Date().toISOString().slice(0, 10) });
+		setForm({ title: "", content: "", imageUrl: "" });
 		setEditId(null);
 		setShowForm(true);
 	};
-	const handleEdit = (item: any) => {
-		setForm({ title: item.title, date: item.date });
+	const handleEdit = (item: NewsItem) => {
+		setForm({
+			title: item.title,
+			content: item.content,
+			imageUrl: item.imageUrl || "",
+		});
 		setEditId(item.id);
 		setShowForm(true);
 	};
-	const handleDelete = (id: number) => {
-		setNews(news.filter((n) => n.id !== id));
-	};
-	const handleSubmit = (e: React.FormEvent) => {
-		e.preventDefault();
-		if (editId) {
-			setNews(news.map((n) => (n.id === editId ? { ...n, ...form } : n)));
-		} else {
-			setNews([...news, { ...form, id: Date.now() }]);
+	const handleDelete = async (id: number) => {
+		if (!confirm("Are you sure you want to delete this news post?")) return;
+		setSubmitting(true);
+		try {
+			const res = await fetch(`/api/news?id=${id}`, { method: "DELETE" });
+			if (!res.ok) throw new Error("Failed to delete news post");
+			setNews(news.filter((n) => n.id !== id));
+		} catch (err: any) {
+			setError(err.message || "Error deleting news post");
+		} finally {
+			setSubmitting(false);
 		}
-		setShowForm(false);
+	};
+	const handleSubmit = async (e: React.FormEvent) => {
+		e.preventDefault();
+		setSubmitting(true);
+		setError(null);
+		try {
+			if (editId) {
+				// Update
+				const res = await fetch(`/api/news?id=${editId}`, {
+					method: "PUT",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify(form),
+				});
+				if (!res.ok) throw new Error("Failed to update news post");
+				const updated = await res.json();
+				setNews(news.map((n) => (n.id === editId ? updated : n)));
+			} else {
+				// Create
+				const res = await fetch("/api/news", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify(form),
+				});
+				if (!res.ok) throw new Error("Failed to create news post");
+				const created = await res.json();
+				setNews([...news, created]);
+			}
+			setShowForm(false);
+		} catch (err: any) {
+			setError(err.message || "Error saving news post");
+		} finally {
+			setSubmitting(false);
+		}
 	};
 
 	return (
@@ -54,20 +117,31 @@ export default function AdminNewsPage() {
 					Add News Post
 				</button>
 			</div>
+			{error && <div className="text-red-500 mb-2">{error}</div>}
 			<div className="bg-white dark:bg-neutral-900 rounded-xl shadow-md p-0 border border-gray-100 dark:border-neutral-800 overflow-x-auto">
 				<table className="min-w-full text-sm">
 					<thead>
 						<tr className="bg-gray-50 dark:bg-neutral-800">
 							<th className="p-3 text-left font-semibold">Title</th>
-							<th className="p-3 text-left font-semibold">Date</th>
+							<th className="p-3 text-left font-semibold">Content</th>
+							<th className="p-3 text-left font-semibold">Image</th>
 							<th className="p-3 text-left font-semibold">Actions</th>
 						</tr>
 					</thead>
 					<tbody>
-						{news.length === 0 ? (
+						{loading ? (
 							<tr>
 								<td
-									colSpan={3}
+									colSpan={4}
+									className="text-center text-gray-400 py-8"
+								>
+									Loading...
+								</td>
+							</tr>
+						) : news.length === 0 ? (
+							<tr>
+								<td
+									colSpan={4}
 									className="text-center text-gray-400 py-8"
 								>
 									No news posts yet.
@@ -80,7 +154,18 @@ export default function AdminNewsPage() {
 									className="border-t border-gray-100 dark:border-neutral-800"
 								>
 									<td className="p-3">{item.title}</td>
-									<td className="p-3">{item.date}</td>
+									<td className="p-3 max-w-xs truncate">{item.content}</td>
+									<td className="p-3">
+										{item.imageUrl ? (
+											<img
+												src={item.imageUrl}
+												alt="news"
+												className="h-12 w-20 object-cover rounded"
+											/>
+										) : (
+											<span className="text-gray-400">No image</span>
+										)}
+									</td>
 									<td className="p-3 flex gap-2">
 										<button
 											onClick={() => handleEdit(item)}
@@ -90,6 +175,7 @@ export default function AdminNewsPage() {
 										</button>
 										<button
 											onClick={() => handleDelete(item.id)}
+											disabled={submitting}
 											className="bg-destructive text-destructive-foreground px-3 py-1 rounded hover:bg-destructive/80"
 										>
 											Delete
@@ -106,12 +192,12 @@ export default function AdminNewsPage() {
 				<div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
 					<form
 						onSubmit={handleSubmit}
-						className="bg-white dark:bg-neutral-900 rounded-xl shadow-lg p-8 w-full max-w-md"
+						className="bg-white dark:bg-neutral-900 rounded-xl shadow-lg p-8 w-full max-w-md space-y-4"
 					>
 						<h2 className="text-xl font-bold mb-4">
 							{editId ? "Edit News Post" : "Add News Post"}
 						</h2>
-						<div className="mb-4">
+						<div>
 							<label className="block mb-1 font-medium">Title</label>
 							<input
 								type="text"
@@ -123,16 +209,27 @@ export default function AdminNewsPage() {
 								required
 							/>
 						</div>
-						<div className="mb-4">
-							<label className="block mb-1 font-medium">Date</label>
-							<input
-								type="date"
-								className="w-full border rounded px-3 py-2"
-								value={form.date}
+						<div>
+							<label className="block mb-1 font-medium">Content</label>
+							<textarea
+								className="w-full border rounded px-3 py-2 min-h-[100px]"
+								value={form.content}
 								onChange={(e) =>
-									setForm((f) => ({ ...f, date: e.target.value }))
+									setForm((f) => ({ ...f, content: e.target.value }))
 								}
 								required
+							/>
+						</div>
+						<div>
+							<label className="block mb-1 font-medium">Image URL</label>
+							<input
+								type="url"
+								className="w-full border rounded px-3 py-2"
+								value={form.imageUrl}
+								onChange={(e) =>
+									setForm((f) => ({ ...f, imageUrl: e.target.value }))
+								}
+								placeholder="https://example.com/image.jpg"
 							/>
 						</div>
 						<div className="flex gap-2 justify-end">
@@ -145,6 +242,7 @@ export default function AdminNewsPage() {
 							</button>
 							<button
 								type="submit"
+								disabled={submitting}
 								className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-primary/90"
 							>
 								{editId ? "Update" : "Create"}
