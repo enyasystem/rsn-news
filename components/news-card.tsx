@@ -96,71 +96,69 @@ export function NewsCard({ article, featured = false }: NewsCardProps) {
           </a>
         ) : isAdminNews ? (
           article.slug ? (
-            <Link
+            <a
               href={`/news/${article.slug}`}
               className="block flex-grow"
-              passHref
-              legacyBehavior
+              target="_blank"
+              rel="noopener noreferrer"
             >
-              <a className="block flex-grow">
-                <div className="relative">
-                  <div
-                    className={`aspect-[16/9] w-full overflow-hidden ${featured ? "aspect-[16/8]" : ""} bg-gray-100 dark:bg-gray-800`}
-                  >
-                    <ImageWithFallback
-                      src={article.imageUrl || "/placeholder.svg"}
-                      fallbackSrc={fallbackImage}
-                      alt={article.title}
-                      width={featured ? 800 : 400}
-                      height={featured ? 450 : 225}
-                      className="transition-transform duration-300 group-hover:scale-105"
-                      priority={featured}
-                    />
-                  </div>
-                  <Badge className="absolute top-3 left-3 bg-[#CC0000] hover:bg-[#AA0000] shadow-md">
-                    {typeof article.category === "object" && article.category ? article.category.name : article.category}
-                  </Badge>
-                  <div className="absolute top-3 right-3 flex gap-2">
-                    <Button
-                      size="icon"
-                      variant="secondary"
-                      className="h-8 w-8 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white hidden sm:flex"
-                      onClick={(e) => {
-                        e.preventDefault()
-                        e.stopPropagation()
-                        // Bookmark functionality would go here
-                      }}
-                    >
-                      <Bookmark className="h-4 w-4 text-gray-700" />
-                      <span className="sr-only">Bookmark</span>
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="secondary"
-                      className="h-8 w-8 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white hidden sm:flex"
-                      onClick={(e) => {
-                        e.preventDefault()
-                        e.stopPropagation()
-                        // Share functionality would go here
-                      }}
-                    >
-                      <Share2 className="h-4 w-4 text-gray-700" />
-                      <span className="sr-only">Share</span>
-                    </Button>
-                  </div>
+              <div className="relative">
+                <div
+                  className={`aspect-[16/9] w-full overflow-hidden ${featured ? "aspect-[16/8]" : ""} bg-gray-100 dark:bg-gray-800`}
+                >
+                  <ImageWithFallback
+                    src={article.imageUrl || "/placeholder.svg"}
+                    fallbackSrc={fallbackImage}
+                    alt={article.title}
+                    width={featured ? 800 : 400}
+                    height={featured ? 450 : 225}
+                    className="transition-transform duration-300 group-hover:scale-105"
+                    priority={featured}
+                  />
                 </div>
-                <CardContent className={`p-4 ${featured ? "p-5" : ""}`}>
-                  <h3
-                    className={`font-bold mb-2 line-clamp-2 group-hover:text-[#CC0000] transition-colors ${
-                      featured ? "text-xl md:text-2xl" : "text-base sm:text-lg"
-                    }`}
+                <Badge className="absolute top-3 left-3 bg-[#CC0000] hover:bg-[#AA0000] shadow-md">
+                  {typeof article.category === "object" && article.category ? article.category.name : article.category}
+                </Badge>
+                <div className="absolute top-3 right-3 flex gap-2">
+                  <Button
+                    size="icon"
+                    variant="secondary"
+                    className="h-8 w-8 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white hidden sm:flex"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      // Bookmark functionality would go here
+                    }}
                   >
-                    {article.title}
-                  </h3>
-                  <p className="text-muted-foreground text-xs sm:text-sm mb-3 line-clamp-2">{article.excerpt}</p>
-                </CardContent>
-              </a>
-            </Link>
+                    <Bookmark className="h-4 w-4 text-gray-700" />
+                    <span className="sr-only">Bookmark</span>
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="secondary"
+                    className="h-8 w-8 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white hidden sm:flex"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      // Share functionality would go here
+                    }}
+                  >
+                    <Share2 className="h-4 w-4 text-gray-700" />
+                    <span className="sr-only">Share</span>
+                  </Button>
+                </div>
+              </div>
+              <CardContent className={`p-4 ${featured ? "p-5" : ""}`}>
+                <h3
+                  className={`font-bold mb-2 line-clamp-2 group-hover:text-[#CC0000] transition-colors ${
+                    featured ? "text-xl md:text-2xl" : "text-base sm:text-lg"
+                  }`}
+                >
+                  {article.title}
+                </h3>
+                <p className="text-muted-foreground text-xs sm:text-sm mb-3 line-clamp-2">{article.excerpt}</p>
+              </CardContent>
+            </a>
           ) : (
             <div className="block flex-grow">
               <div className="relative">

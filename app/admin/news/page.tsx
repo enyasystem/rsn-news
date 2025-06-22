@@ -46,15 +46,14 @@ export default function AdminNewsPage() {
 	const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 
 	// Helper: createSlug
-	function createSlug(title: string, id: string): string {
-		const baseSlug = title
+	function createSlug(title: string): string {
+		return title
 			.toLowerCase()
-			.replace(/[^\w\s-]/g, "")
-			.replace(/\s+/g, "-")
-			.replace(/-+/g, "-")
-			.trim();
-		const uniqueId = id.replace(/[^\w]/g, "").substring(0, 8);
-		return `${baseSlug}-${uniqueId}`;
+			.replace(/[^a-z0-9\s-]/g, "") // remove non-alphanumeric except space and dash
+			.replace(/\s+/g, "-") // spaces to dash
+			.replace(/-+/g, "-") // collapse multiple dashes
+			.replace(/^-+|-+$/g, "") // trim leading/trailing dashes
+			.substring(0, 80); // limit length
 	}
 
 	// Fetch news from API
@@ -189,7 +188,7 @@ export default function AdminNewsPage() {
 			}
 			// Generate slug for new posts or if title changed
 			const uniqueId = Date.now().toString();
-			const slug = createSlug(form.title, uniqueId);
+			const slug = createSlug(form.title);
 			const payload = { ...form, imageUrl: imageUrlLocal, slug, categoryId: HARDCODED_CATEGORY_ID };
 			if (type === "update" && editId) {
 				// Update
@@ -256,7 +255,7 @@ export default function AdminNewsPage() {
 			}
 			// Generate slug for new posts or if title changed
 			const uniqueId = Date.now().toString();
-			const slug = createSlug(form.title, uniqueId);
+			const slug = createSlug(form.title);
 			const payload = { ...form, imageUrl: imageUrlLocal, slug, categoryId: HARDCODED_CATEGORY_ID };
 			if (editId) {
 				// Update
