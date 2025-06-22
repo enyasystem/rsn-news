@@ -37,7 +37,7 @@ export function FeaturedNewsCard({ article }: FeaturedNewsCardProps) {
 
           <div className="absolute top-3 left-3 sm:top-4 sm:left-4">
             <Badge className="bg-[#CC0000] hover:bg-[#AA0000] shadow-md text-xs sm:text-sm px-2 py-0.5 sm:px-3 sm:py-1">
-              {article.category}
+              {typeof article.category === "object" && article.category ? article.category.name : article.category}
             </Badge>
           </div>
 
@@ -119,7 +119,7 @@ export function FeaturedNewsCard({ article }: FeaturedNewsCardProps) {
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
           <div className="absolute top-3 left-3 sm:top-4 sm:left-4">
             <Badge className="bg-[#CC0000] hover:bg-[#AA0000] shadow-md text-xs sm:text-sm px-2 py-0.5 sm:px-3 sm:py-1">
-              {article.category}
+              {typeof article.category === "object" && article.category ? article.category.name : article.category}
             </Badge>
           </div>
           <div className="absolute top-3 right-3 sm:top-4 sm:right-4 flex gap-2">
