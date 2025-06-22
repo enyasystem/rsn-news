@@ -15,7 +15,7 @@ interface NewsCardProps {
 
 export function NewsCard({ article, featured = false }: NewsCardProps) {
   // Determine fallback image based on source
-  const fallbackImage = `/images/sources/${article.source.toLowerCase().replace(/\s+/g, "")}-logo.png`
+  const fallbackImage = `/images/sources/${(article.source ? article.source.toLowerCase().replace(/\s+/g, "") : "admin")}-logo.png`
 
   return (
     <Card
