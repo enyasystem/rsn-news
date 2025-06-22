@@ -8,7 +8,7 @@ export async function middleware(request: NextRequest) {
   if (pathname.startsWith("/admin") && !pathname.startsWith("/admin/login") && !pathname.startsWith("/admin/register")) {
     const adminSession = request.cookies.get("admin_session")?.value
     if (!adminSession) {
-      return NextResponse.redirect(new URL("/admin/login", request.url))
+      return NextResponse.redirect(new URL("/admin-login", request.url))
     }
   }
 
