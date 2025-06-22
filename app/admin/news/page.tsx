@@ -136,22 +136,15 @@ export default function AdminNewsPage() {
 		setImageFile(null);
 	};
 
-	const handleFormSubmit = (type: "create" | "update") => {
-		setShowActionDialog({ open: true, type });
-		setPendingForm({ ...form });
-	};
-
-	const confirmAction = async () => {
-		if (!showActionDialog.type || !pendingForm) return;
+	const handleFormSubmit = async (type: "create" | "update") => {
 		setSubmitting(true);
 		setError(null);
-		let imageUrl = pendingForm.imageUrl;
+		let imageUrl = form.imageUrl;
 		try {
 			if (useFile && imageFile) {
 				// Upload image file to /api/upload with progress
 				const data = new FormData();
-				data.append("file", imageFile);
-
+				data.append("file", imageFile); // <-- Ensure file is appended
 				await new Promise<void>((resolve, reject) => {
 					const xhr = new XMLHttpRequest();
 					xhr.open("POST", "/api/upload");
@@ -179,8 +172,8 @@ export default function AdminNewsPage() {
 					xhr.send(data);
 				});
 			}
-			const payload = { ...pendingForm, imageUrl };
-			if (showActionDialog.type === "update" && editId) {
+			const payload = { ...form, imageUrl };
+			if (type === "update" && editId) {
 				// Update
 				const res = await fetch("/api/news", {
 					method: "PUT",
@@ -195,7 +188,7 @@ export default function AdminNewsPage() {
 					description: "The news post was updated successfully.",
 					variant: "default",
 				});
-			} else if (showActionDialog.type === "create") {
+			} else if (type === "create") {
 				// Create
 				const res = await fetch("/api/news", {
 					method: "POST",
@@ -213,7 +206,12 @@ export default function AdminNewsPage() {
 			}
 			setShowForm(false);
 		} catch (err: any) {
-			setError(err.message || "Error");
+			setError(err.message || "Error saving news post");
+			toast({
+				title: "Save failed",
+				description: err.message || "Error saving news post",
+				variant: "destructive",
+			});
 		} finally {
 			setSubmitting(false);
 			setUploadProgress(null);
@@ -494,41 +492,6 @@ export default function AdminNewsPage() {
 						<button
 							className="bg-muted text-muted-foreground px-4 py-2 rounded font-semibold hover:bg-muted/80 transition"
 							onClick={() => setShowDeleteDialog({ open: false, id: null })}
-							disabled={submitting}
-						>
-							Cancel
-						</button>
-					</DialogFooter>
-				</DialogContent>
-			</Dialog>
-			{/* Create/Update Confirmation Dialog */}
-			<Dialog
-				open={showActionDialog.open}
-				onOpenChange={(open) =>
-					setShowActionDialog((s) => ({ ...s, open }))
-				}
-			>
-				<DialogContent>
-					<DialogHeader>
-						<DialogTitle>
-							Are you sure you want to{" "}
-							{showActionDialog.type === "create"
-								? "create"
-								: "update"}{" "}
-							this news post?
-						</DialogTitle>
-					</DialogHeader>
-					<DialogFooter>
-						<button
-							className="bg-destructive text-white px-4 py-2 rounded font-semibold hover:bg-red-700 transition"
-							onClick={confirmAction}
-							disabled={submitting}
-						>
-							Yes
-						</button>
-						<button
-							className="bg-muted text-muted-foreground px-4 py-2 rounded font-semibold hover:bg-muted/80 transition"
-							onClick={() => setShowActionDialog({ open: false, type: null })}
 							disabled={submitting}
 						>
 							Cancel
