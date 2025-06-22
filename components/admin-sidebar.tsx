@@ -70,8 +70,15 @@ export default function AdminSidebar({ className = "" }: { className?: string })
         <SidebarFooter>
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton onClick={() => router.push("/admin/logout")}
-                isActive={false}>
+              <SidebarMenuButton
+                onClick={() => {
+                  if (typeof window !== "undefined") {
+                    localStorage.removeItem("admin_session");
+                  }
+                  window.location.href = "/admin/logout";
+                }}
+                isActive={false}
+              >
                 <LogOut className="mr-2" /> Logout
               </SidebarMenuButton>
             </SidebarMenuItem>

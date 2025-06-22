@@ -7,13 +7,11 @@ export default function AdminLogin({ onLogin }: { onLogin?: () => void }) {
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
-  const [debug, setDebug] = useState<string | null>(null)
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
-    setDebug(null)
     setLoading(true)
     try {
       const res = await fetch("/api/admin/login", {
@@ -22,21 +20,17 @@ export default function AdminLogin({ onLogin }: { onLogin?: () => void }) {
         body: JSON.stringify({ email, password }),
       })
       const data = await res.json()
-      setDebug(`Response: ${JSON.stringify(data)}`)
       if (!res.ok) {
         setError(data.error || "Login failed")
       } else {
         // Save session to localStorage for dashboard access
         if (typeof window !== "undefined") {
           localStorage.setItem("admin_session", JSON.stringify(data.user))
-          // Set cookie for middleware authentication
-          document.cookie = `admin_session=${data.token}; path=/; max-age=86400; secure; samesite=strict`
         }
         if (onLogin) onLogin()
         router.push("/admin") // Redirect to dashboard after login
       }
     } catch (err: any) {
-      setDebug(`Error: ${err.message}`)
       setError("Failed to login: " + err.message)
     }
     setLoading(false)
@@ -69,7 +63,6 @@ export default function AdminLogin({ onLogin }: { onLogin?: () => void }) {
       >
         {loading ? "Logging in..." : "Login"}
       </button>
-      {debug && <pre className="text-xs text-gray-500 bg-gray-100 rounded p-2 mt-2 overflow-x-auto">{debug}</pre>}
     </form>
   )
 }

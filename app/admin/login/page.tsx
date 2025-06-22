@@ -9,7 +9,7 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-md p-8 bg-white dark:bg-neutral-900 rounded-xl shadow-lg border border-gray-100 dark:border-neutral-800">
         <div className="flex flex-col items-center mb-6">
           <Image
-            src="/placeholder-logo.png"
+            src="../../public/RSN NEWS.jpg"
             alt="RSN News Logo"
             width={64}
             height={64}
