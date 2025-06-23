@@ -665,13 +665,15 @@ async function fetchWithFallback(urls: string[]): Promise<Response> {
       const response = await fetch(url, {
         headers: {
           "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36 RSN-NewsBot/1.0 (+https://rsn-news.vercel.app)",
         },
       })
       if (response.ok) return response
       lastError = new Error(`Failed to fetch from URL ${url}: ${response.status}`)
+      console.error(`[RSN] fetchWithFallback: ${url} failed with status ${response.status}`)
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error))
+      console.error(`[RSN] fetchWithFallback: ${url} threw error`, error)
     }
   }
   throw lastError || new Error("All URLs failed to fetch")
