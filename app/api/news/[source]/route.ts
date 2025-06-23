@@ -15,8 +15,8 @@ export async function GET(req: Request, context: any) {
     // Fetch news from the database for this source
     const dbNews = await prisma.news.findMany({
       where: {
-        // If you have a source field in DB, filter by it. Otherwise, fetch all admin news.
-        // source: source,
+        // Only include admin news if the source is 'admin', otherwise exclude all admin news
+        ...(source === 'admin' ? {} : { id: -1 }), // id: -1 will never match
       },
       orderBy: { createdAt: "desc" },
     });
@@ -40,7 +40,9 @@ export async function GET(req: Request, context: any) {
     const externalArticles = await fetchNewsFromSource(source);
 
     // Merge: DB news first, then external
-    const allArticles = [...dbArticles, ...externalArticles];
+    const allArticles = source === 'admin'
+      ? [...dbArticles, ...externalArticles]
+      : [...externalArticles];
 
     // Sort by publishedAt/createdAt desc (if needed)
     allArticles.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());

@@ -50,7 +50,8 @@ export function LatestNews() {
   // Always display the latest admin news as featured if it exists
   const featuredAdmin = articles.find(a => a.source === "Admin")
   const featured = featuredAdmin || articles[0]
-  const rest = articles.filter(a => a !== featured)
+  // Remove all admin news from the rest
+  const rest = articles.filter(a => a.source !== "Admin" && a !== featured)
 
   if (loading && articles.length === 0) {
     return (
