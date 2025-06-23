@@ -1,5 +1,7 @@
 "use client";
-import AdminLogin from "@/components/admin-login";
+// Update the import path below to the correct relative path based on your project structure.
+// For example, if your AdminLogin component is at 'c:\Users\HP PC\Desktop\rsn-news\components\admin-login.tsx', use:
+import AdminLogin from "../../../components/admin-login";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 
