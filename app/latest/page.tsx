@@ -24,12 +24,23 @@ export default function LatestNewsPage() {
       try {
         const params = new URLSearchParams({ limit: pageSize.toString(), page: page.toString() })
         const res = await fetch(`/api/news?${params.toString()}`)
-        if (!res.ok) throw new Error("Failed to load news.")
-        const data = await res.json()
+        let data = null;
+        try {
+          data = await res.json();
+        } catch (jsonErr) {
+          setError(`Failed to parse JSON: ${jsonErr}`)
+          setLoading(false)
+          return;
+        }
+        if (!res.ok) {
+          setError(data?.error || "Failed to load news.")
+          setLoading(false)
+          return;
+        }
         setArticles(data.articles)
         setTotal(data.pagination?.total || 0)
       } catch (error) {
-        setError("Failed to load news.")
+        setError(`Failed to load news: ${error}`)
       } finally {
         setLoading(false)
       }
@@ -63,11 +74,14 @@ export default function LatestNewsPage() {
 
   if (error) {
     return (
-      <Alert variant="destructive" className="my-6">
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Error</AlertTitle>
-        <AlertDescription>{error}</AlertDescription>
-      </Alert>
+      <section>
+        <h1 className="text-3xl font-bold mb-6">All Latest News</h1>
+        <Alert variant="destructive" className="mb-4">
+          <AlertCircle className="h-5 w-5" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      </section>
     )
   }
 

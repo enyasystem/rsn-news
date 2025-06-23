@@ -1,15 +1,16 @@
 import { NextResponse } from "next/server";
-import { fetchLatestNews } from "@/lib/news-service";
+import { fetchNewsFromSource } from "@/lib/news-api";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(req: Request, { params }: { params: { source: string } }) {
+export async function GET(req: Request, context: any) {
+  const params = await context.params;
   try {
     const { searchParams } = new URL(req.url);
     const limit = parseInt(searchParams.get("limit") || "10", 10);
     const page = parseInt(searchParams.get("page") || "1", 10);
     const source = params.source;
-    const articles = await fetchLatestNews(source, limit * page);
+    const articles = await fetchNewsFromSource(source);
     // Paginate results
     const paged = articles.slice((page - 1) * limit, page * limit);
     return NextResponse.json({
