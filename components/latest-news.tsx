@@ -30,11 +30,11 @@ export function LatestNews() {
         const adminArticles = Array.isArray(adminNews) ? adminNews : (adminNews.articles || [])
         // Helper to get a valid date string for sorting
         const getDate = (item: NewsArticle) =>
-          item.created_at ?? item.pubDate ?? item.publishedAt ?? "1970-01-01T00:00:00Z"
-        // Merge: admin news first, then external news, both sorted by date
+          item.created_at ?? item.publishedAt ?? item.pubDate ?? "1970-01-01T00:00:00Z"
+        // Sort admin news by date (desc)
         const sortedAdmin = [...adminArticles].sort((a, b) => new Date(getDate(b)).getTime() - new Date(getDate(a)).getTime())
-        const sortedExternal = [...externalNews].sort((a, b) => new Date(getDate(b)).getTime() - new Date(getDate(a)).getTime())
-        const merged = [...sortedAdmin, ...sortedExternal]
+        // Merge: admin news first, then external news
+        const merged = [...sortedAdmin, ...externalNews]
         setArticles(merged)
       } catch (error) {
         console.error("Error fetching latest news:", error)
@@ -46,6 +46,11 @@ export function LatestNews() {
 
     loadLatestNews()
   }, [])
+
+  // Always display the latest admin news as featured if it exists
+  const featuredAdmin = articles.find(a => a.source === "Admin")
+  const featured = featuredAdmin || articles[0]
+  const rest = articles.filter(a => a !== featured)
 
   if (loading && articles.length === 0) {
     return (
@@ -126,10 +131,10 @@ export function LatestNews() {
       )}
       <div className="grid grid-cols-1 gap-8">
         {/* Featured Article */}
-        <FeaturedNewsCard article={articles[0]} />
+        {featured && <FeaturedNewsCard article={featured} />}
         {/* Other Articles */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {articles.slice(1, 5).map((article) => (
+          {rest.slice(0, 4).map((article) => (
             <NewsCard key={article.id} article={article} />
           ))}
         </div>
