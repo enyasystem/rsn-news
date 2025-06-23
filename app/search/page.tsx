@@ -59,7 +59,11 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                   />
                 </div>
                 <CardContent className="p-4">
-                  <Badge className="mb-2 bg-[#CC0000] hover:bg-[#AA0000]">{article.category}</Badge>
+                  <Badge className="mb-2 bg-[#CC0000] hover:bg-[#AA0000]">
+                    {typeof article.category === "string"
+                      ? article.category
+                      : article.category?.name ?? ""}
+                  </Badge>
                   <h3 className="text-lg font-bold mb-2 line-clamp-2 group-hover:text-[#CC0000] transition-colors">
                     {article.title}
                   </h3>
