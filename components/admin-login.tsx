@@ -33,13 +33,13 @@ export default function AdminLogin({ onLogin }: { onLogin?: () => void }) {
         if (typeof window !== "undefined") {
           localStorage.setItem("admin_session", JSON.stringify(data.user))
         }
-        if (onLogin) onLogin()
         toast({
           title: "Login successful",
           description: "Welcome back!",
           variant: "default",
         })
-        router.push("/admin") // Redirect to dashboard after login
+        router.push("/admin") // Always redirect after login
+        if (onLogin) onLogin()
       }
     } catch (err: any) {
       setError("Failed to login: " + err.message)
