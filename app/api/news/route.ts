@@ -62,7 +62,8 @@ export async function POST(req: Request) {
     });
     return NextResponse.json(news);
   } catch (error) {
-    return NextResponse.json({ error: "Failed to create news post." }, { status: 500 });
+    // Debug: return error details for troubleshooting (remove in production)
+    return NextResponse.json({ error: "Failed to create news post.", details: String(error) }, { status: 500 });
   }
 }
 
