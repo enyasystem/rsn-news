@@ -32,14 +32,16 @@ export default function AdminLogin({ onLogin }: { onLogin?: () => void }) {
         // Save session to localStorage for dashboard access
         if (typeof window !== "undefined") {
           localStorage.setItem("admin_session", JSON.stringify(data.user))
+          // Set cookie for middleware
+          document.cookie = `admin_session=${data.user.token}; path=/; max-age=604800` // 7 days
         }
-        if (onLogin) onLogin()
         toast({
           title: "Login successful",
           description: "Welcome back!",
           variant: "default",
         })
-        router.push("/admin") // Redirect to dashboard after login
+        router.push("/admin") // Always redirect after login
+        if (onLogin) onLogin()
       }
     } catch (err: any) {
       setError("Failed to login: " + err.message)

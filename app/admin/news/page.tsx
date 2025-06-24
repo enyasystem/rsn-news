@@ -64,7 +64,8 @@ export default function AdminNewsPage() {
 			const res = await fetch("/api/news");
 			if (!res.ok) throw new Error("Failed to fetch news");
 			const data = await res.json();
-			setNews(data);
+			// If the response is { articles: [...] }, use data.articles
+			setNews(Array.isArray(data) ? data : data.articles || []);
 		} catch (err: any) {
 			setError(err.message || "Error loading news");
 		} finally {

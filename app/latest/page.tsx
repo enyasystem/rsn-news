@@ -37,8 +37,8 @@ export default function LatestNewsPage() {
           setLoading(false)
           return;
         }
-        setArticles(data.articles)
-        setTotal(data.pagination?.total || 0)
+        setArticles(data.articles || (Array.isArray(data) ? data : []))
+        setTotal(data.pagination?.total || (data.articles ? data.articles.length : Array.isArray(data) ? data.length : 0))
       } catch (error) {
         setError(`Failed to load news: ${error}`)
       } finally {
