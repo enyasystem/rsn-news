@@ -41,3 +41,16 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Failed to create news post." }, { status: 500 });
   }
 }
+
+export async function DELETE(req: Request) {
+  try {
+    const { id } = await req.json();
+    if (!id) {
+      return NextResponse.json({ error: "Missing news post id." }, { status: 400 });
+    }
+    await prisma.news.delete({ where: { id } });
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    return NextResponse.json({ error: "Failed to delete news post." }, { status: 500 });
+  }
+}
