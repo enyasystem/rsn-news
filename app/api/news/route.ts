@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { fetchLatestNews } from "@/lib/news-service";
 import prisma from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -8,13 +9,11 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const limit = parseInt(searchParams.get("limit") || "18", 10);
     const page = parseInt(searchParams.get("page") || "1", 10);
-    const articles = await prisma.news.findMany({
-      orderBy: { createdAt: "desc" },
-      skip: (page - 1) * limit,
-      take: limit,
-      include: { category: true, author: true },
-    });
-    return NextResponse.json({ articles });
+    // Fetch all news from all sources (including admin and external)
+    const allArticles = await fetchLatestNews("all", limit * page);
+    // Paginate
+    const paged = allArticles.slice((page - 1) * limit, page * limit);
+    return NextResponse.json({ articles: paged, pagination: { page, limit, total: allArticles.length } });
   } catch (error) {
     return NextResponse.json({ articles: [], error: "Failed to fetch news." }, { status: 500 });
   }
