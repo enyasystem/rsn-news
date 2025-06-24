@@ -20,9 +20,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });
     }
     // Create JWT
+    if (!process.env.JWT_SECRET) {
+      return NextResponse.json({ error: "JWT_SECRET is not set on the server." }, { status: 500 });
+    }
     const token = jwt.sign(
       { id: admin.id, email: admin.email, name: admin.name },
-      process.env.JWT_SECRET!,
+      process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
     // Return user info (never return password)
@@ -35,6 +38,7 @@ export async function POST(req: Request) {
       },
     });
   } catch (error) {
-    return NextResponse.json({ error: "Server error. Please try again." }, { status: 500 });
+    // Debug: log error details in response (remove in production)
+    return NextResponse.json({ error: "Server error. Please try again.", details: String(error) }, { status: 500 });
   }
 }
