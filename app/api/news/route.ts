@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { fetchLatestNews } from "@/lib/news-service";
+import prisma from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
@@ -8,19 +8,36 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const limit = parseInt(searchParams.get("limit") || "18", 10);
     const page = parseInt(searchParams.get("page") || "1", 10);
-    const articles = await fetchLatestNews("all", limit * page);
-    // Paginate results
-    const paged = articles.slice((page - 1) * limit, page * limit);
-    return NextResponse.json({
-      articles: paged,
-      pagination: {
-        page,
-        limit,
-        total: articles.length,
+    const articles = await prisma.news.findMany({
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * limit,
+      take: limit,
+      include: { category: true, author: true },
+    });
+    return NextResponse.json({ articles });
+  } catch (error) {
+    return NextResponse.json({ articles: [], error: "Failed to fetch news." }, { status: 500 });
+  }
+}
+
+export async function POST(req: Request) {
+  try {
+    const body = await req.json();
+    const { title, content, imageUrl, slug, categoryId } = body;
+    if (!title || !content || !slug) {
+      return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
+    }
+    const news = await prisma.news.create({
+      data: {
+        title,
+        content,
+        imageUrl,
+        slug,
+        categoryId: categoryId || null,
       },
     });
+    return NextResponse.json(news);
   } catch (error) {
-    console.error("Error fetching latest news:", error);
-    return NextResponse.json({ articles: [], error: "Failed to fetch news." }, { status: 500 });
+    return NextResponse.json({ error: "Failed to create news post." }, { status: 500 });
   }
 }
