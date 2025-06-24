@@ -32,6 +32,8 @@ export default function AdminLogin({ onLogin }: { onLogin?: () => void }) {
         // Save session to localStorage for dashboard access
         if (typeof window !== "undefined") {
           localStorage.setItem("admin_session", JSON.stringify(data.user))
+          // Set cookie for middleware
+          document.cookie = `admin_session=${data.user.token}; path=/; max-age=604800` // 7 days
         }
         toast({
           title: "Login successful",
