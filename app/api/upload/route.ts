@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { writeFile } from "fs/promises";
+import path from "path";
 
 export const dynamic = "force-dynamic";
 
@@ -9,12 +11,18 @@ export async function POST(req: Request) {
     if (!file || typeof file === "string") {
       return NextResponse.json({ error: "No file uploaded." }, { status: 400 });
     }
-    // For demo: just return a placeholder URL. Replace with real upload logic (e.g. S3, Cloudinary, local, etc.)
-    // You can save the file buffer to disk or upload to a cloud provider here.
-    // Example: const buffer = Buffer.from(await file.arrayBuffer());
-    // For now, return a static placeholder
-    return NextResponse.json({ url: "/placeholder.jpg" });
+    // Get file buffer and name
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    const originalName = (file as File).name || `upload-${Date.now()}`;
+    const ext = path.extname(originalName) || ".jpg";
+    const fileName = `image-${Date.now()}${ext}`;
+    const uploadPath = path.join(process.cwd(), "public", "uploads", fileName);
+    await writeFile(uploadPath, buffer);
+    // Return the public URL
+    const url = `/uploads/${fileName}`;
+    return NextResponse.json({ url });
   } catch (error) {
-    return NextResponse.json({ error: "Upload failed." }, { status: 500 });
+    return NextResponse.json({ error: "Upload failed.", details: String(error) }, { status: 500 });
   }
 }
