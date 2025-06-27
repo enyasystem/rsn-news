@@ -1,9 +1,9 @@
 "use client";
-// Update the import path below to the correct relative path based on your project structure.
-// For example, if your AdminLogin component is at 'c:\Users\HP PC\Desktop\rsn-news\components\admin-login.tsx', use:
-import AdminLogin from "../../../components/admin-login";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useEffect, useState } from "react";
+
+const AdminLogin = dynamic(() => import("../../../components/admin-login"), { ssr: false });
 
 export default function AdminLoginPage() {
   const [showLogoutToast, setShowLogoutToast] = useState(false);
