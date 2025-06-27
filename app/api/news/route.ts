@@ -70,3 +70,26 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ error: "Failed to delete news post." }, { status: 500 });
   }
 }
+
+export async function PUT(req: Request) {
+  try {
+    const body = await req.json();
+    const { id, title, content, imageUrl, slug, categoryId } = body;
+    if (!id || !title || !content || !slug) {
+      return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
+    }
+    const updated = await prisma.news.update({
+      where: { id: Number(id) },
+      data: {
+        title,
+        content,
+        imageUrl,
+        slug,
+        categoryId: categoryId || null,
+      },
+    });
+    return NextResponse.json(updated);
+  } catch (error) {
+    return NextResponse.json({ error: "Failed to update news post.", details: String(error) }, { status: 500 });
+  }
+}
