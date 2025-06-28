@@ -33,13 +33,57 @@ export const config = {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === "GET") {
-    // Return all news (regardless of authorId)
+    // Return all news (admin + external sources)
     try {
-      const news = await prisma.news.findMany({
+      const limit = parseInt(req.query.limit as string || "18", 10);
+      const page = parseInt(req.query.page as string || "1", 10);
+      // 1. Fetch admin news from DB
+      const adminNews = await prisma.news.findMany({
         orderBy: { createdAt: "desc" },
         include: { category: true },
       });
-      res.status(200).json({ articles: news });
+      const adminArticles = adminNews.map((n) => ({
+        id: n.id.toString(),
+        title: n.title,
+        slug: n.slug,
+        excerpt: n.content.slice(0, 200) + (n.content.length > 200 ? "..." : ""),
+        content: n.content,
+        imageUrl: n.imageUrl || "/placeholder.jpg",
+        category: n.category?.name || "General",
+        source: "Admin",
+        sourceUrl: `/news/${n.slug}`,
+        publishedAt: n.createdAt.toISOString(),
+        author: n.authorId ? undefined : undefined,
+      }));
+      // 2. Fetch external news from all sources
+      const { NEWS_SOURCES } = await import("@/lib/news-api");
+      const { fetchNewsFromSource } = await import("@/lib/news-api");
+      const sourceKeys = Object.keys(NEWS_SOURCES);
+      const fetches = sourceKeys.map((src) =>
+        fetchNewsFromSource(src).then((articles) => articles || [])
+      );
+      const results = await Promise.all(fetches);
+      const externalArticles = results.flat();
+      // 3. Merge, dedupe by slug or sourceUrl, sort by publishedAt desc
+      const allArticles = [...adminArticles, ...externalArticles];
+      const seen = new Set();
+      const deduped = allArticles.filter((a) => {
+        const key = a.slug || a.sourceUrl;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+      deduped.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+      // 4. Paginate
+      const paged = deduped.slice((page - 1) * limit, page * limit);
+      res.status(200).json({
+        articles: paged,
+        pagination: {
+          page,
+          limit,
+          total: deduped.length,
+        },
+      });
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch news.", details: String(error) });
     }
