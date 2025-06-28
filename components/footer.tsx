@@ -201,15 +201,15 @@ export default function Footer() {
             <ul className="space-y-3">
               <li className="flex items-start">
                 <MapPin className="h-5 w-5 text-gray-400 mr-2 mt-0.5 flex-shrink-0" />
-                <span className="text-sm text-gray-300">123 News Street, Lagos, Nigeria</span>
+                <span className="text-sm text-gray-300">Lagos, Nigeria</span>
               </li>
-              <li className="flex items-center">
-                <Phone className="h-5 w-5 text-gray-400 mr-2 flex-shrink-0" />
+              {/* <li className="flex items-center"> */}
+                {/* <Phone className="h-5 w-5 text-gray-400 mr-2 flex-shrink-0" />
                 <span className="text-sm text-gray-300">+234 123 456 7890</span>
-              </li>
+              </li> */}
               <li className="flex items-center">
                 <Mail className="h-5 w-5 text-gray-400 mr-2 flex-shrink-0" />
-                <span className="text-sm text-gray-300">info@nigerianews.com</span>
+                <span className="text-sm text-gray-300">admin@rsnnews.com</span>
               </li>
             </ul>
 

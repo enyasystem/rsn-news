@@ -62,20 +62,12 @@ export default function AdminNewsPage() {
 		setError(null);
 		try {
 			const res = await fetch("/api/news");
-			let debugMsg = "";
-			if (!res.ok) {
-				debugMsg = `Failed to fetch news. Status: ${res.status} ${res.statusText}`;
-				try {
-					const body = await res.text();
-					debugMsg += `\nResponse body: ${body}`;
-				} catch {}
-				throw new Error(debugMsg);
-			}
+			if (!res.ok) throw new Error("Failed to fetch news");
 			const data = await res.json();
 			// If the response is { articles: [...] }, use data.articles
 			setNews(Array.isArray(data) ? data : data.articles || []);
 		} catch (err: any) {
-			setError((err && err.message) || "Error loading news");
+			setError(err.message || "Error loading news");
 		} finally {
 			setLoading(false);
 		}
@@ -164,34 +156,10 @@ export default function AdminNewsPage() {
 		setError(null);
 		let imageUrlLocal = form.imageUrl;
 		try {
-			if (type === "create" && useFile && imageFile) {
-				// Use FormData for file upload and all fields
-				const data = new FormData();
-				data.append("image", imageFile); // <-- Must be 'image' to match backend
-				data.append("title", form.title);
-				data.append("content", form.content);
-				data.append("slug", createSlug(form.title));
-				data.append("categoryId", HARDCODED_CATEGORY_ID.toString());
-
-				const res = await fetch("/api/news", {
-					method: "POST",
-					body: data,
-				});
-				if (!res.ok) throw new Error("Failed to create news post");
-				const created = await res.json();
-				setNews([...news, created]);
-				toast({
-					title: "News created",
-					description: "The news post was created successfully.",
-					variant: "default",
-				});
-				setShowForm(false);
-				return;
-			}
 			if (useFile && imageFile) {
 				// Upload image file to /api/upload with progress
 				const data = new FormData();
-				data.append("file", imageFile); // legacy upload for update
+				data.append("file", imageFile); // <-- Ensure file is appended
 				await new Promise<void>((resolve, reject) => {
 					const xhr = new XMLHttpRequest();
 					xhr.open("POST", "/api/upload");
@@ -238,11 +206,8 @@ export default function AdminNewsPage() {
 					description: "The news post was updated successfully.",
 					variant: "default",
 				});
-				setShowForm(false);
-				return;
-			}
-			if (!useFile) {
-				// Create without file
+			} else if (type === "create") {
+				// Create
 				const res = await fetch("/api/news", {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
@@ -256,25 +221,13 @@ export default function AdminNewsPage() {
 					description: "The news post was created successfully.",
 					variant: "default",
 				});
-				setShowForm(false);
 			}
+			setShowForm(false);
 		} catch (err: any) {
-			let debugMsg = err.message || "Error saving news post";
-			// If the error is from the backend and has a JSON response, try to extract more info
-			if (err instanceof Response) {
-				try {
-					const data = await err.json();
-					debugMsg = data.error || debugMsg;
-					if (data.debug) {
-						debugMsg += `\nDebug info: ${JSON.stringify(data.debug)}`;
-					}
-				} catch {}
-			}
-			setError(debugMsg);
+			setError(err.message || "Error saving news post");
 			toast({
 				title: "Save failed",
-				description: debugMsg +
-					"\nIf this is a validation error, please check that all required fields are filled. If the problem persists, check your server logs for more details.",
+				description: err.message || "Error saving news post",
 				variant: "destructive",
 			});
 		} finally {
@@ -338,22 +291,10 @@ export default function AdminNewsPage() {
 			}
 			setShowForm(false);
 		} catch (err: any) {
-			let debugMsg = err.message || "Error saving news post";
-			// If the error is from the backend and has a JSON response, try to extract more info
-			if (err instanceof Response) {
-				try {
-					const data = await err.json();
-					debugMsg = data.error || debugMsg;
-					if (data.debug) {
-						debugMsg += `\nDebug info: ${JSON.stringify(data.debug)}`;
-					}
-				} catch {}
-			}
-			setError(debugMsg);
+			setError(err.message || "Error saving news post");
 			toast({
 				title: "Save failed",
-				description: debugMsg +
-					"\nIf this is a validation error, please check that all required fields are filled. If the problem persists, check your server logs for more details.",
+				description: err.message || "Error saving news post",
 				variant: "destructive",
 			});
 		} finally {
