@@ -1,4 +1,4 @@
-import { getArticleBySlug } from "@/lib/news-service";
+import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,40 +7,48 @@ import { ImageWithFallback } from "@/components/image-with-fallback";
 import { format } from "date-fns";
 
 interface NewsPageProps {
-  params: Promise<{ slug: string }>
+  params: { slug: string }
 }
 
 export async function generateMetadata({ params }: NewsPageProps): Promise<Metadata> {
-  const { slug } = await params;
-  const article = await getArticleBySlug(slug);
-  if (!article) return {};
+  const { slug } = params;
+  const news = await prisma.news.findUnique({
+    where: { slug },
+    include: { category: true },
+  });
+  if (!news) return {};
   return {
-    title: article.title,
-    description: article.excerpt,
+    title: news.title,
+    description: news.content.slice(0, 200),
     openGraph: {
-      images: [article.imageUrl || "/placeholder.svg"],
+      images: [news.imageUrl || "/placeholder.svg"],
     },
   };
 }
 
 export default async function NewsPage({ params }: NewsPageProps) {
-  const { slug } = await params;
-  const article = await getArticleBySlug(slug);
-  if (!article) return notFound();
+  const { slug } = params;
+  const news = await prisma.news.findUnique({
+    where: { slug },
+    include: { category: true },
+  });
+  if (!news) return notFound();
 
   return (
     <div className="container mx-auto px-4 py-8">
       <Card>
         <CardContent className="p-6">
           <div className="mb-4">
-            <Badge className="bg-[#CC0000] hover:bg-[#AA0000]">{typeof article.category === "object" && article.category ? article.category.name : article.category}</Badge>
+            <Badge className="bg-[#CC0000] hover:bg-[#AA0000]">
+              {news.category ? news.category.name : "General"}
+            </Badge>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold mb-4">{article.title}</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold mb-4">{news.title}</h1>
           <div className="mb-4">
             <span className="text-muted-foreground text-sm">
               {(() => {
                 try {
-                  return format(new Date(article.publishedAt), "MMMM d, yyyy");
+                  return format(new Date(news.createdAt), "MMMM d, yyyy");
                 } catch (e) {
                   return "Recently published";
                 }
@@ -49,9 +57,9 @@ export default async function NewsPage({ params }: NewsPageProps) {
           </div>
           <div className="aspect-video w-full relative mb-6">
             <ImageWithFallback
-              src={article.imageUrl || "/placeholder.svg"}
+              src={news.imageUrl || "/placeholder.svg"}
               fallbackSrc={"/placeholder.svg"}
-              alt={article.title}
+              alt={news.title}
               width={800}
               height={450}
               className="object-cover w-full h-full"
@@ -59,12 +67,12 @@ export default async function NewsPage({ params }: NewsPageProps) {
             />
           </div>
           <div className="prose dark:prose-invert max-w-none mb-6">
-            <p className="text-lg font-medium mb-4">{article.excerpt}</p>
+            <p className="text-lg font-medium mb-4">{news.content.slice(0, 200)}</p>
             <div className="line-clamp-6 mb-4">
-              {article.content ? (
-                <div dangerouslySetInnerHTML={{ __html: article.content.substring(0, 500) + "..." }} />
+              {news.content ? (
+                <div dangerouslySetInnerHTML={{ __html: news.content.substring(0, 500) + "..." }} />
               ) : (
-                <p>{article.excerpt}</p>
+                <p>{news.content.slice(0, 200)}</p>
               )}
             </div>
           </div>
