@@ -1,9 +1,5 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { promises as fs } from "fs";
-import path from "path";
-import formidable, { IncomingForm, Fields, Files } from "formidable";
-import { IncomingMessage } from "http";
 
 export const dynamic = "force-dynamic";
 
@@ -40,49 +36,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  // Disable Next.js body parsing for this route
-  // @ts-ignore
-  if (req.method !== "POST") return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
-
-  // Convert Next.js Request to Node.js IncomingMessage
-  const nodeReq = (req as any).req as IncomingMessage;
-  const form = new IncomingForm({
-    uploadDir: path.join(process.cwd(), "public", "uploads"),
-    keepExtensions: true,
-  });
-
-  return new Promise((resolve) => {
-    form.parse(nodeReq, async (err: any, fields: Fields, files: Files) => {
-      if (err) {
-        resolve(NextResponse.json({ error: "Image upload failed", details: String(err) }, { status: 500 }));
-        return;
-      }
-      const { title, content, slug, categoryId } = fields;
-      let imageUrl = "";
-      if (files.image) {
-        const file = Array.isArray(files.image) ? files.image[0] : files.image;
-        imageUrl = "/uploads/" + path.basename((file as any).filepath || (file as any).path);
-      }
-      if (!title || !content || !slug) {
-        resolve(NextResponse.json({ error: "Missing required fields." }, { status: 400 }));
-        return;
-      }
-      try {
-        const news = await prisma.news.create({
-          data: {
-            title: String(title),
-            content: String(content),
-            imageUrl,
-            slug: String(slug),
-            categoryId: categoryId ? Number(categoryId) : null,
-          },
-        });
-        resolve(NextResponse.json(news));
-      } catch (error) {
-        resolve(NextResponse.json({ error: "Failed to create news post.", details: String(error) }, { status: 500 }));
-      }
-    });
-  });
+  return NextResponse.json({ error: "File upload not supported in app/api. Use /pages/api/news instead." }, { status: 400 });
 }
 
 export async function DELETE(req: Request) {
