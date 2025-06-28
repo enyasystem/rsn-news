@@ -21,7 +21,8 @@ export default function NewsPostForm({ onPost }: { onPost?: () => void }) {
       const fileName = `${Date.now()}.${fileExt}`
       const { data, error: uploadError } = await supabase.storage.from('news-images').upload(fileName, image)
       if (uploadError) {
-        setError("Image upload failed: " + uploadError.message)
+        // Debug: Log full upload error and Supabase env info for Vercel troubleshooting
+        setError("Image upload failed: " + uploadError.message + (uploadError.statusCode ? ` (Status: ${uploadError.statusCode})` : "") + ` | Debug: Check Supabase bucket permissions, env vars, and CORS on Vercel. Error: ${JSON.stringify(uploadError)}`)
         setLoading(false)
         return
       }
