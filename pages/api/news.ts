@@ -4,6 +4,26 @@ import formidable, { IncomingForm, Fields, Files } from "formidable";
 import path from "path";
 import fs from "fs";
 
+// Helper to parse JSON body when bodyParser is false
+async function parseJsonBody(req: NextApiRequest) {
+  return new Promise<any>((resolve, reject) => {
+    let body = "";
+    req.on("data", (chunk) => {
+      body += chunk;
+    });
+    req.on("end", () => {
+      try {
+        resolve(JSON.parse(body));
+      } catch (e) {
+        resolve({});
+      }
+    });
+    req.on("error", (err) => {
+      reject(err);
+    });
+  });
+}
+
 export const config = {
   api: {
     bodyParser: false,
@@ -67,6 +87,60 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         res.status(500).json({ error: "Failed to create news post.", details: String(error), debug: { title, content, slug, categoryId, imageUrl } });
       }
     });
+  } else if (req.method === "DELETE") {
+    // Delete a news post by id
+    try {
+      let id;
+      let body: any = {};
+      if (req.headers["content-type"]?.includes("application/json")) {
+        body = await parseJsonBody(req);
+        id = body?.id;
+      } else {
+        id = req.query.id;
+        console.log("DELETE /api/news using query param id:", id);
+      }
+      console.log("DELETE /api/news raw body:", body);
+      console.log("DELETE /api/news id:", id);
+      if (!id) {
+        res.status(400).json({ error: "Missing news post id." });
+        return;
+      }
+      await prisma.news.delete({ where: { id: Number(id) } });
+      res.status(200).json({ success: true });
+    } catch (error) {
+      console.error("DELETE /api/news error:", error);
+      res.status(500).json({ error: "Failed to delete news post.", details: String(error) });
+    }
+    return;
+  } else if (req.method === "PUT") {
+    // Update a news post
+    try {
+      let body: any = {};
+      if (req.headers["content-type"]?.includes("application/json")) {
+        body = await parseJsonBody(req);
+      } else {
+        body = req.body && typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+      }
+      const { id, title, content, imageUrl, slug, categoryId } = body;
+      if (!id || !title || !content || !slug) {
+        res.status(400).json({ error: "Missing required fields." });
+        return;
+      }
+      const updated = await prisma.news.update({
+        where: { id: Number(id) },
+        data: {
+          title,
+          content,
+          imageUrl,
+          slug,
+          categoryId: categoryId || null,
+        },
+      });
+      res.status(200).json(updated);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update news post.", details: String(error) });
+    }
+    return;
   } else {
     res.status(405).json({ error: "Method not allowed" });
   }
