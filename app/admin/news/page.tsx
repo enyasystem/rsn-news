@@ -164,10 +164,34 @@ export default function AdminNewsPage() {
 		setError(null);
 		let imageUrlLocal = form.imageUrl;
 		try {
+			if (type === "create" && useFile && imageFile) {
+				// Use FormData for file upload and all fields
+				const data = new FormData();
+				data.append("image", imageFile); // <-- Must be 'image' to match backend
+				data.append("title", form.title);
+				data.append("content", form.content);
+				data.append("slug", createSlug(form.title));
+				data.append("categoryId", HARDCODED_CATEGORY_ID.toString());
+
+				const res = await fetch("/api/news", {
+					method: "POST",
+					body: data,
+				});
+				if (!res.ok) throw new Error("Failed to create news post");
+				const created = await res.json();
+				setNews([...news, created]);
+				toast({
+					title: "News created",
+					description: "The news post was created successfully.",
+					variant: "default",
+				});
+				setShowForm(false);
+				return;
+			}
 			if (useFile && imageFile) {
 				// Upload image file to /api/upload with progress
 				const data = new FormData();
-				data.append("file", imageFile); // <-- Ensure file is appended
+				data.append("file", imageFile); // legacy upload for update
 				await new Promise<void>((resolve, reject) => {
 					const xhr = new XMLHttpRequest();
 					xhr.open("POST", "/api/upload");
@@ -214,8 +238,11 @@ export default function AdminNewsPage() {
 					description: "The news post was updated successfully.",
 					variant: "default",
 				});
-			} else if (type === "create") {
-				// Create
+				setShowForm(false);
+				return;
+			}
+			if (!useFile) {
+				// Create without file
 				const res = await fetch("/api/news", {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
@@ -229,8 +256,8 @@ export default function AdminNewsPage() {
 					description: "The news post was created successfully.",
 					variant: "default",
 				});
+				setShowForm(false);
 			}
-			setShowForm(false);
 		} catch (err: any) {
 			let debugMsg = err.message || "Error saving news post";
 			// If the error is from the backend and has a JSON response, try to extract more info
