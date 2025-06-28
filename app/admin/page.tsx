@@ -1,20 +1,35 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+
+interface DashboardStats {
+  postCount: number;
+  categoryCount: number;
+  adminCount: number;
+  recentPosts: Array<{
+    id: number;
+    title: string;
+    category: { name: string } | null;
+    createdAt: string;
+  }>;
+
+}
 
 export default function AdminDashboardPage() {
-  const router = useRouter();
-  const [stats, setStats] = useState<{ postCount: number; categoryCount: number } | null>(null);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     async function fetchStats() {
       setLoading(true);
+      setError("");
       try {
-        const res = await fetch("/api/admin/stats");
+        const res = await fetch("/api/admin/dashboard");
         const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to load stats");
         setStats(data);
-      } catch {
+      } catch (err: any) {
+        setError(err.message || "Failed to load stats");
         setStats(null);
       } finally {
         setLoading(false);
@@ -24,83 +39,109 @@ export default function AdminDashboardPage() {
   }, []);
 
   return (
-    <div className="w-full max-w-7xl mx-auto py-6 px-2 sm:px-4 md:px-6 lg:px-8">
-      <h1 className="text-2xl md:text-3xl font-bold mb-8 tracking-tight">
-        Admin Dashboard
-      </h1>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {/* Responsive Stat Widgets */}
-        <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-md p-6 flex flex-col items-start justify-between min-h-[120px] border border-gray-100 dark:border-neutral-800">
-          <h2 className="text-base font-medium text-gray-500 dark:text-gray-400 mb-1">
-            Total News Posts
-          </h2>
-          <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
-            {loading || !stats ? "--" : stats.postCount}
-          </p>
-        </div>
-        <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-md p-6 flex flex-col items-start justify-between min-h-[120px] border border-gray-100 dark:border-neutral-800">
-          <h2 className="text-base font-medium text-gray-500 dark:text-gray-400 mb-1">
-            Categories
-          </h2>
-          <p className="text-3xl font-bold text-green-600 dark:text-green-400">
-            {loading || !stats ? "--" : stats.categoryCount}
-          </p>
-        </div>
-        <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-md p-6 flex flex-col items-start justify-between min-h-[120px] border border-gray-100 dark:border-neutral-800">
-          <h2 className="text-base font-medium text-gray-500 dark:text-gray-400 mb-1">
-            Admins
-          </h2>
-          <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">
-            --
-          </p>
-        </div>
-        <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-md p-6 flex flex-col items-start justify-between min-h-[120px] border border-gray-100 dark:border-neutral-800">
-          <h2 className="text-base font-medium text-gray-500 dark:text-gray-400 mb-1">
-            Active Users
-          </h2>
-          <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">
-            --
-          </p>
-        </div>
-      </div>
-      {/* Responsive Recent Activity Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="col-span-2 bg-white dark:bg-neutral-900 rounded-xl shadow-md p-6 border border-gray-100 dark:border-neutral-800">
-          <h3 className="text-lg font-semibold mb-4">Recent News Posts</h3>
-          <div className="space-y-3">
-            {/* Example recent post row */}
-            <div className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-neutral-800 last:border-b-0">
-              <span className="font-medium text-gray-700 dark:text-gray-200">
-                No recent posts
-              </span>
-              <span className="text-xs text-gray-400">--</span>
+    <div className="min-h-screen bg-gray-100 font-sans">
+      <div className="flex min-h-screen">
+       
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col p-4 md:p-6 lg:p-8">
+          {/* Top Bar */}
+          <div className="flex items-center justify-between mb-6 flex-wrap gap-2">
+            <div className="flex items-center space-x-4">
+              <button
+                className="md:hidden text-2xl"
+                onClick={() => {
+                  const sidebar = document.getElementById("sidebar");
+                  if (sidebar) sidebar.classList.toggle("hidden");
+                }}
+              >
+                ☰
+              </button>
+              <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+            </div>
+            <div className="text-gray-600">
+              Welcome,{" "}
+              <span className="font-medium">Admin</span>
             </div>
           </div>
-        </div>
-        <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-md p-6 border border-gray-100 dark:border-neutral-800">
-          <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
-          <div className="flex flex-col gap-3">
-            <button
-              className="w-full bg-primary text-primary-foreground font-semibold py-2 rounded-lg hover:bg-primary/90 transition"
-              onClick={() => router.push("/admin/news")}
-              aria-label="Add News Post"
-            >
-              Add News Post
-            </button>
-            <button
-              className="w-full bg-secondary text-secondary-foreground font-semibold py-2 rounded-lg hover:bg-secondary/90 transition"
-              onClick={() => router.push("/admin/categories")}
-              aria-label="Manage Categories"
-            >
-              Manage Categories
-            </button>
-            <button
-              className="w-full bg-muted text-muted-foreground font-semibold py-2 rounded-lg hover:bg-muted/80 transition"
-              onClick={() => router.push("/admin/users")}
-              aria-label="View All Admins"
-            >
-              View All Admins
-            </button>
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div className="bg-white p-4 rounded-lg shadow text-center">
+              <p className="text-gray-500">Total News Posts</p>
+              <h3 className="text-2xl font-bold">
+                {loading || !stats ? "--" : stats.postCount}
+              </h3>
+            </div>
+            <div className="bg-white p-4 rounded-lg shadow text-center">
+              <p className="text-gray-500">Categories</p>
+              <h3 className="text-2xl font-bold">
+                {loading || !stats ? "--" : stats.categoryCount}
+              </h3>
+            </div>
+            <div className="bg-white p-4 rounded-lg shadow text-center">
+              <p className="text-gray-500">Admins</p>
+              <h3 className="text-2xl font-bold">
+                {loading || !stats ? "--" : stats.adminCount}
+              </h3>
+            </div>
+            <div className="bg-white p-4 rounded-lg shadow text-center">
+              <p className="text-gray-500">Recent Posts</p>
+              <h3 className="text-2xl font-bold">
+                {loading || !stats ? "--" : stats.recentPosts.length}
+              </h3>
+            </div>
+          </div>
+          {/* Main Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Recent News Posts */}
+            <div className="col-span-2 bg-white p-4 rounded shadow overflow-x-auto">
+              <h2 className="text-xl font-bold mb-4">Recent News Posts</h2>
+              {loading ? (
+                <div className="text-gray-400">Loading...</div>
+              ) : error ? (
+                <div className="text-red-600">{error}</div>
+              ) : (
+                <table className="w-full text-left border-t border-gray-200">
+                  <thead className="text-gray-500 uppercase text-sm">
+                    <tr>
+                      <th className="py-2">Title</th>
+                      <th className="py-2">Category</th>
+                      <th className="py-2">Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {stats.recentPosts.map((post) => (
+                      <tr className="border-t" key={post.id}>
+                        <td className="py-2 text-blue-600">{post.title}</td>
+                        <td className="py-2">{post.category?.name || "General"}</td>
+                        <td className="py-2">
+                          {new Date(post.createdAt).toLocaleString()}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+            {/* Quick Actions */}
+            <div className="bg-white p-4 rounded shadow flex flex-col justify-between">
+              <div>
+                <h2 className="text-xl font-bold mb-4">Quick Actions</h2>
+                <div className="space-y-3">
+                  <button className="w-full bg-red-600 text-white py-2 px-4 rounded hover:bg-red-700">
+                    + Add News Post
+                  </button>
+                  <button className="w-full bg-red-600 text-white py-2 px-4 rounded hover:bg-red-700">
+                    + Manage Categories
+                  </button>
+                  <button className="w-full bg-red-600 text-white py-2 px-4 rounded hover:bg-red-700">
+                    + View All Admins
+                  </button>
+                  <button className="w-full bg-red-600 text-white py-2 px-4 rounded hover:bg-red-700">
+                    + Settings
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

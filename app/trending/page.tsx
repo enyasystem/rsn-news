@@ -1,6 +1,8 @@
 import { NewsCard } from "@/components/news-card"
 import { fetchLatestNews } from "@/lib/news-service"
 
+export const dynamic = "force-dynamic";
+
 export default async function TrendingPage() {
   // You may want to implement a fetchTrendingNews function for real trending logic
   const articles = await fetchLatestNews("all", 10)

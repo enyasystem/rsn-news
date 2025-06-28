@@ -15,6 +15,8 @@ interface SearchPageProps {
   }
 }
 
+export const dynamic = "force-dynamic"
+
 export default async function SearchPage({ searchParams }: SearchPageProps) {
   const { q, category, source, page = "1" } = searchParams
   const currentPage = Number.parseInt(page, 10) || 1

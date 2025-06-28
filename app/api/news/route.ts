@@ -64,7 +64,7 @@ export async function DELETE(req: Request) {
     if (!id) {
       return NextResponse.json({ error: "Missing news post id." }, { status: 400 });
     }
-    await prisma.news.delete({ where: { id } });
+    await prisma.news.delete({ where: { id: Number(id) } });
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json({ error: "Failed to delete news post." }, { status: 500 });
