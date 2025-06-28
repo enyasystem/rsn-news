@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { promises as fs } from "fs";
+import path from "path";
+import { IncomingForm } from "formidable";
 
 export const dynamic = "force-dynamic";
 
@@ -36,26 +39,46 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  try {
-    const body = await req.json();
-    const { title, content, imageUrl, slug, categoryId } = body;
-    if (!title || !content || !slug) {
-      return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
-    }
-    const news = await prisma.news.create({
-      data: {
-        title,
-        content,
-        imageUrl,
-        slug,
-        categoryId: categoryId || null,
-      },
+  // Disable Next.js body parsing for this route
+  // @ts-ignore
+  if (req.method !== "POST") return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
+
+  const form = new IncomingForm();
+  form.uploadDir = path.join(process.cwd(), "public", "uploads");
+  form.keepExtensions = true;
+
+  return new Promise((resolve) => {
+    form.parse(req, async (err, fields, files) => {
+      if (err) {
+        resolve(NextResponse.json({ error: "Image upload failed", details: String(err) }, { status: 500 }));
+        return;
+      }
+      const { title, content, slug, categoryId } = fields;
+      let imageUrl = "";
+      if (files.image) {
+        const file = Array.isArray(files.image) ? files.image[0] : files.image;
+        imageUrl = "/uploads/" + path.basename(file.filepath || file.path);
+      }
+      if (!title || !content || !slug) {
+        resolve(NextResponse.json({ error: "Missing required fields." }, { status: 400 }));
+        return;
+      }
+      try {
+        const news = await prisma.news.create({
+          data: {
+            title: String(title),
+            content: String(content),
+            imageUrl,
+            slug: String(slug),
+            categoryId: categoryId ? Number(categoryId) : null,
+          },
+        });
+        resolve(NextResponse.json(news));
+      } catch (error) {
+        resolve(NextResponse.json({ error: "Failed to create news post.", details: String(error) }, { status: 500 }));
+      }
     });
-    return NextResponse.json(news);
-  } catch (error) {
-    // Debug: return error details for troubleshooting (remove in production)
-    return NextResponse.json({ error: "Failed to create news post.", details: String(error) }, { status: 500 });
-  }
+  });
 }
 
 export async function DELETE(req: Request) {

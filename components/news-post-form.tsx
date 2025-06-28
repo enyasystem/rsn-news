@@ -1,5 +1,4 @@
 import { useState } from "react"
-import { supabase } from "@/lib/supabaseClient"
 
 export default function NewsPostForm({ onPost }: { onPost?: () => void }) {
   const [title, setTitle] = useState("")
@@ -15,33 +14,30 @@ export default function NewsPostForm({ onPost }: { onPost?: () => void }) {
     setLoading(true)
     setError("")
     setSuccess("")
-    let imageUrl = ""
-    if (image) {
-      const fileExt = image.name.split('.').pop()
-      const fileName = `${Date.now()}.${fileExt}`
-      const { data, error: uploadError } = await supabase.storage.from('news-images').upload(fileName, image)
-      if (uploadError) {
-        // Debug: Log full upload error and Supabase env info for Vercel troubleshooting
-        setError("Image upload failed: " + uploadError.message + (uploadError.statusCode ? ` (Status: ${uploadError.statusCode})` : "") + ` | Debug: Check Supabase bucket permissions, env vars, and CORS on Vercel. Error: ${JSON.stringify(uploadError)}`)
-        setLoading(false)
-        return
-      }
-      imageUrl = supabase.storage.from('news-images').getPublicUrl(fileName).data.publicUrl
-    }
-    const { error: insertError } = await supabase.from('news').insert([
-      { title, content, category, image_url: imageUrl }
-    ])
-    if (insertError) {
-      setError("Failed to post news: " + insertError.message)
-    } else {
+    try {
+      const formData = new FormData()
+      formData.append("title", title)
+      formData.append("content", content)
+      formData.append("slug", title.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""))
+      formData.append("categoryId", category)
+      if (image) formData.append("image", image)
+      const res = await fetch("/api/news", {
+        method: "POST",
+        body: formData,
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Failed to post news")
       setSuccess("News posted successfully!")
       setTitle("")
       setContent("")
       setCategory("")
       setImage(null)
       if (onPost) onPost()
+    } catch (err: any) {
+      setError(err.message || "Failed to post news")
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   return (
@@ -64,7 +60,7 @@ export default function NewsPostForm({ onPost }: { onPost?: () => void }) {
       />
       <input
         type="text"
-        placeholder="Category"
+        placeholder="Category ID"
         value={category}
         onChange={e => setCategory(e.target.value)}
         className="w-full border rounded px-3 py-2"

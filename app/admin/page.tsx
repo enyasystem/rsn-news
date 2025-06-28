@@ -109,7 +109,7 @@ export default function AdminDashboardPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {stats.recentPosts.map((post) => (
+                    {(stats?.recentPosts || []).map((post) => (
                       <tr className="border-t" key={post.id}>
                         <td className="py-2 text-blue-600">{post.title}</td>
                         <td className="py-2">{post.category?.name || "General"}</td>
