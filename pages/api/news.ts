@@ -1,8 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import prisma from "@/lib/prisma";
 import formidable, { IncomingForm, Fields, Files } from "formidable";
-import path from "path";
-import fs from "fs";
+import cloudinary from '@/lib/cloudinary';
 
 // Helper to parse JSON body when bodyParser is false
 async function parseJsonBody(req: NextApiRequest) {
@@ -45,10 +44,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return;
   }
   if (req.method === "POST") {
-    const form = new IncomingForm({
-      uploadDir: path.join(process.cwd(), "public", "uploads"),
-      keepExtensions: true,
-    });
+    const form = new IncomingForm();
     form.parse(req, async (err: any, fields: Fields, files: Files) => {
       if (err) {
         res.status(500).json({ error: "Image upload failed", details: String(err) });
@@ -60,7 +56,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       let imageUrl = "";
       if (files.image) {
         const file = Array.isArray(files.image) ? files.image[0] : files.image;
-        imageUrl = "/uploads/" + path.basename((file as any).filepath || (file as any).path);
+        try {
+          // Upload to Cloudinary
+          const uploadResult = await cloudinary.uploader.upload((file as any).filepath || (file as any).path, {
+            folder: "news-images"
+          });
+          imageUrl = uploadResult.secure_url;
+        } catch (uploadErr) {
+          console.error('Cloudinary upload error:', uploadErr);
+          res.status(500).json({ error: "Failed to upload image to Cloudinary", details: String(uploadErr) });
+          return;
+        }
       }
       if (!title || !content || !slug) {
         res.status(400).json({ error: "Missing required fields.", debug: { title, content, slug, categoryId, fields } });
