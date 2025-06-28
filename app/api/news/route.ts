@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { promises as fs } from "fs";
 import path from "path";
-import { IncomingForm } from "formidable";
+import formidable, { IncomingForm, Fields, Files } from "formidable";
+import { IncomingMessage } from "http";
 
 export const dynamic = "force-dynamic";
 
@@ -43,12 +44,15 @@ export async function POST(req: Request) {
   // @ts-ignore
   if (req.method !== "POST") return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
 
-  const form = new IncomingForm();
-  form.uploadDir = path.join(process.cwd(), "public", "uploads");
-  form.keepExtensions = true;
+  // Convert Next.js Request to Node.js IncomingMessage
+  const nodeReq = (req as any).req as IncomingMessage;
+  const form = new IncomingForm({
+    uploadDir: path.join(process.cwd(), "public", "uploads"),
+    keepExtensions: true,
+  });
 
   return new Promise((resolve) => {
-    form.parse(req, async (err, fields, files) => {
+    form.parse(nodeReq, async (err: any, fields: Fields, files: Files) => {
       if (err) {
         resolve(NextResponse.json({ error: "Image upload failed", details: String(err) }, { status: 500 }));
         return;
@@ -57,7 +61,7 @@ export async function POST(req: Request) {
       let imageUrl = "";
       if (files.image) {
         const file = Array.isArray(files.image) ? files.image[0] : files.image;
-        imageUrl = "/uploads/" + path.basename(file.filepath || file.path);
+        imageUrl = "/uploads/" + path.basename((file as any).filepath || (file as any).path);
       }
       if (!title || !content || !slug) {
         resolve(NextResponse.json({ error: "Missing required fields." }, { status: 400 }));
