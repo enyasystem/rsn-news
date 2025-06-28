@@ -52,7 +52,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         res.status(500).json({ error: "Image upload failed", details: String(err) });
         return;
       }
-      const { title, content, slug, categoryId } = fields;
+      // Always extract first value if field is array
+      const getField = (field: any) => Array.isArray(field) ? field[0] : field;
+      const title = getField(fields.title);
+      const content = getField(fields.content);
+      const slug = getField(fields.slug);
+      const categoryId = getField(fields.categoryId);
       // Debug: Log received fields for troubleshooting
       console.log('Received fields:', fields);
       let imageUrl = "";
