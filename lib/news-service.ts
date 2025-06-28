@@ -4,10 +4,8 @@ import type { NewsArticle } from "./news-api"
 // Helper to get absolute URL for server-side fetches
 function getAbsoluteUrl(path: string) {
   if (typeof window !== "undefined") return path // On client, use relative
-  // Prefer NEXT_PUBLIC_BASE_URL, then SITE_URL, then VERCEL_URL, then localhost
-  const base = process.env.NEXT_PUBLIC_BASE_URL ||
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    (process.env.VERCEL_URL && `https://${process.env.VERCEL_URL}`) ||
+  const base = process.env.NEXT_PUBLIC_SITE_URL ||
+    process.env.VERCEL_URL && `https://${process.env.VERCEL_URL}` ||
     "http://localhost:3000"
   return base + path
 }
@@ -76,8 +74,7 @@ export async function fetchTrendingNews(limit = 5): Promise<NewsArticle[]> {
     const url = `/api/trending?limit=${limit}`
     const fetchUrl = getAbsoluteUrl(url)
     const response = await fetch(fetchUrl, {
-      cache: typeof window === "undefined" ? "no-store" : undefined, // SSR: always fresh
-      next: { revalidate: 300 }, // ISR fallback
+      next: { revalidate: 300 }, // Revalidate every 5 minutes
     })
 
     if (!response.ok) {

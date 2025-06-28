@@ -1,0 +1,11 @@
+To fix the build error, you must remove one of the following conflicting files:
+
+- pages/api/news.ts
+- app/api/news/route.ts
+
+Choose which API route style you want to use (pages or app directory) and delete the other file. You cannot have both for the same route.
+
+If you want file upload support, keep pages/api/news.ts and delete app/api/news/route.ts.
+If you want to use the new app directory API routes, keep app/api/news/route.ts and delete pages/api/news.ts (but you will need to add file upload support there).
+
+After deleting the conflicting file, re-run your build.
