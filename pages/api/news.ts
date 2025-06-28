@@ -1,7 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import prisma from "@/lib/prisma";
 import formidable, { IncomingForm, Fields, Files } from "formidable";
-import cloudinary from '@/lib/cloudinary';
+import { supabase } from '@/lib/supabaseClient';
+import path from "path";
+import fs from "fs";
 
 // Helper to parse JSON body when bodyParser is false
 async function parseJsonBody(req: NextApiRequest) {
@@ -56,17 +58,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       let imageUrl = "";
       if (files.image) {
         const file = Array.isArray(files.image) ? files.image[0] : files.image;
-        try {
-          // Upload to Cloudinary
-          const uploadResult = await cloudinary.uploader.upload((file as any).filepath || (file as any).path, {
-            folder: "news-images"
-          });
-          imageUrl = uploadResult.secure_url;
-        } catch (uploadErr) {
-          console.error('Cloudinary upload error:', uploadErr);
-          res.status(500).json({ error: "Failed to upload image to Cloudinary", details: String(uploadErr) });
+        const filePath = (file as any).filepath || (file as any).path;
+        const fileExt = path.extname((file as any).originalFilename || (file as any).name || filePath);
+        const fileName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${fileExt}`;
+        const bucket = 'news-images';
+        // @ts-ignore
+        const { data, error: uploadError } = await supabase.storage.from(bucket).upload(fileName, fs.createReadStream(filePath), {
+          contentType: (file as any).mimetype || 'image/png',
+          upsert: false,
+          duplex: "half",
+        });
+        if (uploadError) {
+          console.error('Supabase upload error:', uploadError);
+          res.status(500).json({ error: "Failed to upload image to Supabase", details: String(uploadError) });
           return;
         }
+        // Get public URL
+        const { data: publicUrlData } = supabase.storage.from(bucket).getPublicUrl(fileName);
+        imageUrl = publicUrlData?.publicUrl || '';
       }
       if (!title || !content || !slug) {
         res.status(400).json({ error: "Missing required fields.", debug: { title, content, slug, categoryId, fields } });
