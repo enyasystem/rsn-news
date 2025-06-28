@@ -12,6 +12,19 @@ export async function GET() {
   }
 }
 
+export async function POST(req: Request) {
+  try {
+    const { name } = await req.json();
+    if (!name) {
+      return NextResponse.json({ error: "Category name is required." }, { status: 400 });
+    }
+    const category = await prisma.category.create({ data: { name } });
+    return NextResponse.json(category);
+  } catch (error) {
+    return NextResponse.json({ error: "Failed to create category." }, { status: 500 });
+  }
+}
+
 export async function DELETE(req: Request) {
   try {
     const { id } = await req.json();

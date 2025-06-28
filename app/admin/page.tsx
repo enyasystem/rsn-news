@@ -139,6 +139,10 @@ export default function AdminDashboardPage() {
                   <button className="w-full bg-red-600 text-white py-2 px-4 rounded hover:bg-red-700">
                     + Settings
                   </button>
+                  {/* Debug: Quick Actions are not yet connected to routes or modals. Implement navigation or modal logic as needed. */}
+                  <p className="text-xs text-gray-500 mt-2">
+                    Debug: Quick Actions are not yet connected to routes or modals. Implement navigation or modal logic as needed.
+                  </p>
                 </div>
               </div>
             </div>
