@@ -101,7 +101,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           },
         });
         res.status(200).json(news);
-      } catch (error) {
+      } catch (error: any) {
+        // Handle unique constraint error for slug
+        if (error.code === 'P2002' && error.meta?.target?.includes('slug')) {
+          res.status(400).json({ error: "A news post with this slug already exists. Please use a unique title or slug." });
+          return;
+        }
         // Log the error to the server console for full details
         console.error('Prisma create error:', error);
         res.status(500).json({ error: "Failed to create news post.", details: String(error), debug: { title, content, slug, categoryId, imageUrl } });
