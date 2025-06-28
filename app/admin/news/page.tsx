@@ -62,12 +62,20 @@ export default function AdminNewsPage() {
 		setError(null);
 		try {
 			const res = await fetch("/api/news");
-			if (!res.ok) throw new Error("Failed to fetch news");
+			let debugMsg = "";
+			if (!res.ok) {
+				debugMsg = `Failed to fetch news. Status: ${res.status} ${res.statusText}`;
+				try {
+					const body = await res.text();
+					debugMsg += `\nResponse body: ${body}`;
+				} catch {}
+				throw new Error(debugMsg);
+			}
 			const data = await res.json();
 			// If the response is { articles: [...] }, use data.articles
 			setNews(Array.isArray(data) ? data : data.articles || []);
 		} catch (err: any) {
-			setError(err.message || "Error loading news");
+			setError((err && err.message) || "Error loading news");
 		} finally {
 			setLoading(false);
 		}
@@ -224,10 +232,22 @@ export default function AdminNewsPage() {
 			}
 			setShowForm(false);
 		} catch (err: any) {
-			setError(err.message || "Error saving news post");
+			let debugMsg = err.message || "Error saving news post";
+			// If the error is from the backend and has a JSON response, try to extract more info
+			if (err instanceof Response) {
+				try {
+					const data = await err.json();
+					debugMsg = data.error || debugMsg;
+					if (data.debug) {
+						debugMsg += `\nDebug info: ${JSON.stringify(data.debug)}`;
+					}
+				} catch {}
+			}
+			setError(debugMsg);
 			toast({
 				title: "Save failed",
-				description: err.message || "Error saving news post",
+				description: debugMsg +
+					"\nIf this is a validation error, please check that all required fields are filled. If the problem persists, check your server logs for more details.",
 				variant: "destructive",
 			});
 		} finally {
@@ -291,10 +311,22 @@ export default function AdminNewsPage() {
 			}
 			setShowForm(false);
 		} catch (err: any) {
-			setError(err.message || "Error saving news post");
+			let debugMsg = err.message || "Error saving news post";
+			// If the error is from the backend and has a JSON response, try to extract more info
+			if (err instanceof Response) {
+				try {
+					const data = await err.json();
+					debugMsg = data.error || debugMsg;
+					if (data.debug) {
+						debugMsg += `\nDebug info: ${JSON.stringify(data.debug)}`;
+					}
+				} catch {}
+			}
+			setError(debugMsg);
 			toast({
 				title: "Save failed",
-				description: err.message || "Error saving news post",
+				description: debugMsg +
+					"\nIf this is a validation error, please check that all required fields are filled. If the problem persists, check your server logs for more details.",
 				variant: "destructive",
 			});
 		} finally {
