@@ -19,6 +19,7 @@ import Image from "next/image";
 
 export default function AdminSidebar({ className = "" }: { className?: string }) {
   const router = useRouter();
+
   return (
     <SidebarProvider>
       <Sidebar className={className}>
@@ -33,26 +34,22 @@ export default function AdminSidebar({ className = "" }: { className?: string })
             <SidebarGroupLabel>Management</SidebarGroupLabel>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton onClick={() => router.push("/admin")}
-                  isActive={false}>
+                <SidebarMenuButton onClick={() => router.push("/admin")} isActive={false}>
                   <Newspaper className="mr-2" /> Dashboard
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton onClick={() => router.push("/admin/news")}
-                  isActive={false}>
+                <SidebarMenuButton onClick={() => router.push("/admin/news")} isActive={false}>
                   <List className="mr-2" /> News Posts
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton onClick={() => router.push("/admin/categories")}
-                  isActive={false}>
+                <SidebarMenuButton onClick={() => router.push("/admin/categories")} isActive={false}>
                   <List className="mr-2" /> Categories
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton onClick={() => router.push("/admin/users")}
-                  isActive={false}>
+                <SidebarMenuButton onClick={() => router.push("/admin/users")} isActive={false}>
                   <Users className="mr-2" /> Admins
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -63,8 +60,7 @@ export default function AdminSidebar({ className = "" }: { className?: string })
             <SidebarGroupLabel>Settings</SidebarGroupLabel>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton onClick={() => router.push("/admin/settings")}
-                  isActive={false}>
+                <SidebarMenuButton onClick={() => router.push("/admin/settings")} isActive={false}>
                   <Settings className="mr-2" /> Settings
                 </SidebarMenuButton>
               </SidebarMenuItem>
