@@ -26,7 +26,7 @@ export function NewsFeed() {
     setLoading(true)
     setError(null)
     try {
-      console.log(`NewsFeed: Loading news from ${source}`)
+        console.log(`NewsFeed: Loading news from ${source}`)
       const data = await fetchLatestNews(source)
 
       if (data.length === 0 && source !== "all") {

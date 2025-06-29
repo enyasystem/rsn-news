@@ -131,7 +131,6 @@ export function LatestNews() {
     <section>
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold">Latest News</h2>
-        <span className="text-xs text-muted-foreground">Admin: {articles.filter(a => a.source === 'Admin').length} | External: {articles.filter(a => a.source !== 'Admin').length}</span>
         <Link
           href="/latest"
           className="group flex items-center text-sm font-medium text-[#CC0000] hover:text-[#AA0000]"
