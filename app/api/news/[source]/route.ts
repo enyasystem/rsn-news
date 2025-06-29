@@ -19,6 +19,9 @@ export async function GET(req: Request, context: any) {
         ...(source === 'admin' ? {} : { id: -1 }), // id: -1 will never match
       },
       orderBy: { createdAt: "desc" },
+      include: {
+        category: true,
+      },
     });
 
     // Map DB news to NewsArticle shape

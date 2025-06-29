@@ -21,13 +21,28 @@ export function LatestNews() {
       setLoading(true)
       setError(null)
       try {
-        // Fetch external news and admin news in parallel
-        const [externalNews, adminNews] = await Promise.all([
-          fetchLatestNews("all", 15),
-          fetch("/api/news").then(res => res.ok ? res.json() : [])
+        // Fetch external news and admin news in parallel, cast as any for type guard
+        const [externalNewsRaw, adminNewsRaw] = await Promise.all([
+          fetchLatestNews("all", 15) as Promise<any>,
+          fetch("/api/news").then(res => res.ok ? res.json() : []) as Promise<any>
         ])
-        // If adminNews is an object with 'articles', use that, else assume array
-        const adminArticles = Array.isArray(adminNews) ? adminNews : (adminNews.articles || [])
+        // Ensure both are arrays with type guards
+        function hasArticlesProp(obj: any): obj is { articles: NewsArticle[] } {
+          return obj && typeof obj === 'object' && Array.isArray(obj.articles)
+        }
+        const externalNews = Array.isArray(externalNewsRaw)
+          ? externalNewsRaw
+          : hasArticlesProp(externalNewsRaw)
+            ? externalNewsRaw.articles
+            : []
+        const adminArticles = Array.isArray(adminNewsRaw)
+          ? adminNewsRaw
+          : hasArticlesProp(adminNewsRaw)
+            ? adminNewsRaw.articles
+            : []
+        // Debug logs
+        console.log('Admin articles:', adminArticles)
+        console.log('External news:', externalNews)
         // Helper to get a valid date string for sorting
         const getDate = (item: NewsArticle) =>
           item.created_at ?? item.publishedAt ?? item.pubDate ?? "1970-01-01T00:00:00Z"
@@ -35,6 +50,7 @@ export function LatestNews() {
         const sortedAdmin = [...adminArticles].sort((a, b) => new Date(getDate(b)).getTime() - new Date(getDate(a)).getTime())
         // Merge: admin news first, then external news
         const merged = [...sortedAdmin, ...externalNews]
+        console.log('Merged articles:', merged)
         setArticles(merged)
       } catch (error) {
         console.error("Error fetching latest news:", error)
@@ -50,8 +66,8 @@ export function LatestNews() {
   // Always display the latest admin news as featured if it exists
   const featuredAdmin = articles.find(a => a.source === "Admin")
   const featured = featuredAdmin || articles[0]
-  // Remove all admin news from the rest
-  const rest = articles.filter(a => a.source !== "Admin" && a !== featured)
+  // Show all other articles except the featured one
+  const rest = articles.filter(a => a.id !== featured?.id)
 
   if (loading && articles.length === 0) {
     return (
@@ -115,6 +131,7 @@ export function LatestNews() {
     <section>
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold">Latest News</h2>
+        <span className="text-xs text-muted-foreground">Admin: {articles.filter(a => a.source === 'Admin').length} | External: {articles.filter(a => a.source !== 'Admin').length}</span>
         <Link
           href="/latest"
           className="group flex items-center text-sm font-medium text-[#CC0000] hover:text-[#AA0000]"
