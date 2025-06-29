@@ -11,7 +11,6 @@ export async function GET() {
       prisma.category.count(),
       prisma.admin.count(),
       prisma.news.findMany({
-        where: { authorId: { not: null } }, // Only admin news for recentPosts
         orderBy: { createdAt: "desc" },
         take: 8,
         include: { category: true },
