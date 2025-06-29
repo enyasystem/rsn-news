@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { fetchNewsFromSource } from "@/lib/news-api";
 import prisma from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -11,10 +12,13 @@ export async function GET(req: Request, context: any) {
     const page = parseInt(searchParams.get("page") || "1", 10);
     const source = params.source;
 
-    // Fetch news from the database for this source (admin or external)
+    // Fetch news from the database for this source
     const dbNews = await prisma.news.findMany({
-      where: source === 'admin' ? { source: 'Admin' } : { source },
-      orderBy: { publishedAt: "desc" },
+      where: {
+        // Only include admin news if the source is 'admin', otherwise exclude all admin news
+        ...(source === 'admin' ? {} : { id: -1 }), // id: -1 will never match
+      },
+      orderBy: { createdAt: "desc" },
       include: {
         category: true,
       },
@@ -25,27 +29,35 @@ export async function GET(req: Request, context: any) {
       id: n.id.toString(),
       title: n.title,
       slug: n.slug,
-      excerpt: n.excerpt || (n.content ? n.content.slice(0, 200) + (n.content.length > 200 ? "..." : "") : ""),
+      excerpt: n.content.slice(0, 200) + (n.content.length > 200 ? "..." : ""),
       content: n.content,
       imageUrl: n.imageUrl || "/placeholder.jpg",
-      category: n.category?.name || n.category || "General",
-      source: n.source || "Admin",
-      sourceUrl: n.sourceUrl || "",
-      publishedAt: n.publishedAt ? n.publishedAt.toISOString() : n.createdAt.toISOString(),
-      author: n.authorId ? undefined : undefined,
+      category: n.category?.name || "General",
+      source: "Admin",
+      sourceUrl: "",
+      publishedAt: n.createdAt.toISOString(),
+      author: n.authorId ? undefined : undefined, // Optionally map author
     }));
 
-    // Sort by publishedAt/createdAt desc
-    dbArticles.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+    // Fetch external news
+    const externalArticles = await fetchNewsFromSource(source);
+
+    // Merge: DB news first, then external
+    const allArticles = source === 'admin'
+      ? [...dbArticles, ...externalArticles]
+      : [...externalArticles];
+
+    // Sort by publishedAt/createdAt desc (if needed)
+    allArticles.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
 
     // Paginate
-    const paged = dbArticles.slice((page - 1) * limit, page * limit);
+    const paged = allArticles.slice((page - 1) * limit, page * limit);
     return NextResponse.json({
       articles: paged,
       pagination: {
         page,
         limit,
-        total: dbArticles.length,
+        total: allArticles.length,
       },
     });
   } catch (error) {

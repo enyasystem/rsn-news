@@ -1,59 +1,40 @@
 import { NextResponse } from "next/server"
-import { fetchLatestNews } from "@/lib/news-service"
-import prisma from "@/lib/prisma"
 
-// This route is triggered by a cron job to fetch and save external news to the DB
+// This route would be triggered by an external cron job (Vercel Cron or GitHub Actions)
+// to fetch news from various sources
+
 export async function GET() {
   try {
-    const articles = await fetchLatestNews("all", 100)
-    for (const article of articles) {
-      await prisma.news.upsert({
-        where: { slug: article.slug },
-        update: {
-          title: article.title,
-          excerpt: article.excerpt,
-          content: typeof article.content === "string" ? article.content : (article.content || ""),
-          imageUrl: article.imageUrl,
-          category: {
-            connectOrCreate: {
-              where: { name: typeof article.category === "string" ? article.category : (article.category?.name || "General") },
-              create: { name: typeof article.category === "string" ? article.category : (article.category?.name || "General") },
-            },
-          },
-          source: article.source,
-          sourceUrl: article.sourceUrl,
-          publishedAt: new Date(article.publishedAt),
-        },
-        create: {
-          title: article.title,
-          slug: article.slug,
-          excerpt: article.excerpt,
-          content: typeof article.content === "string" ? article.content : (article.content || ""),
-          imageUrl: article.imageUrl,
-          category: {
-            connectOrCreate: {
-              where: { name: typeof article.category === "string" ? article.category : (article.category?.name || "General") },
-              create: { name: typeof article.category === "string" ? article.category : (article.category?.name || "General") },
-            },
-          },
-          source: article.source,
-          sourceUrl: article.sourceUrl,
-          publishedAt: new Date(article.publishedAt),
-        },
-      })
-    }
+    // In a real implementation, this would:
+    // 1. Fetch news from various APIs (Punch, Guardian, Vanguard, etc.)
+    // 2. Parse the responses
+    // 3. Store the articles in memory or a lightweight storage solution
+    // 4. Return a success response
+
+    // Mock implementation for demonstration
+    const sources = [
+      { name: "Punch", url: "https://punchng.com" },
+      { name: "Guardian", url: "https://guardian.ng" },
+      { name: "Vanguard", url: "https://vanguardngr.com" },
+      { name: "Channels TV", url: "https://channelstv.com" },
+    ]
+
+    // Log the sources we would fetch from
+    console.log("Fetching news from sources:", sources.map((s) => s.name).join(", "))
+
     return NextResponse.json({
       success: true,
-      message: "News fetching and DB upsert completed successfully",
+      message: "News fetching job completed successfully",
       timestamp: new Date().toISOString(),
-      articlesUpserted: articles.length,
+      sourcesFetched: sources.length,
     })
   } catch (error) {
-    console.error("Error fetching or upserting news:", error)
+    console.error("Error fetching news:", error)
+
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to fetch or upsert news",
+        message: "Failed to fetch news",
         error: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 },
