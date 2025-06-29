@@ -7,11 +7,11 @@ export async function GET() {
   try {
     // Get stats
     const [postCount, categoryCount, adminCount, recentPosts] = await Promise.all([
-      prisma.news.count({ where: { authorId: { not: null } } }), // Only admin news
+      prisma.news.count(), // Count all news posts regardless of authorId
       prisma.category.count(),
       prisma.admin.count(),
       prisma.news.findMany({
-        where: { authorId: { not: null } }, // Only admin news
+        where: { authorId: { not: null } }, // Only admin news for recentPosts
         orderBy: { createdAt: "desc" },
         take: 8,
         include: { category: true },
