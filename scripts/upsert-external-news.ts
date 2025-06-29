@@ -1,12 +1,12 @@
-import { NextResponse } from "next/server"
-import { fetchLatestNews } from "@/lib/news-service"
-import prisma from "@/lib/prisma"
+import { fetchLatestNews } from "@/lib/news-service";
+import prisma from "@/lib/prisma";
 
-// This route is triggered by a cron job to fetch and save external news to the DB
-export async function GET() {
-  try {
-    const articles = await fetchLatestNews("all", 100)
-    for (const article of articles) {
+async function upsertExternalNews() {
+  const articles = await fetchLatestNews("all", 100);
+  let successCount = 0;
+  let failCount = 0;
+  for (const article of articles) {
+    try {
       await prisma.news.upsert({
         where: { slug: article.slug },
         update: {
@@ -40,23 +40,14 @@ export async function GET() {
           sourceUrl: article.sourceUrl,
           publishedAt: new Date(article.publishedAt),
         },
-      })
+      });
+      successCount++;
+    } catch (error) {
+      failCount++;
+      console.error(`Failed to upsert article with slug ${article.slug}:`, error);
     }
-    return NextResponse.json({
-      success: true,
-      message: "News fetching and DB upsert completed successfully",
-      timestamp: new Date().toISOString(),
-      articlesUpserted: articles.length,
-    })
-  } catch (error) {
-    console.error("Error fetching or upserting news:", error)
-    return NextResponse.json(
-      {
-        success: false,
-        message: "Failed to fetch or upsert news",
-        error: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 },
-    )
   }
+  console.log(`External news upserted! Success: ${successCount}, Failed: ${failCount}`);
 }
+
+upsertExternalNews().then(() => process.exit(0));
