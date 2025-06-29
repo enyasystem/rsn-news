@@ -9,8 +9,9 @@ import { Menu, Sun, Moon, Search, Bell, Home, TrendingUp, Newspaper, BookOpen, U
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Input } from "@/components/ui/input"
-import { useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
+import Image from "next/image"
 
 const categories = [
   { name: "Politics", href: "/category/politics" },
@@ -26,7 +27,7 @@ export default function Header() {
   const [searchQuery, setSearchQuery] = useState("")
   const [showSearch, setShowSearch] = useState(false)
   const { theme, setTheme } = useTheme()
-  const router = useRouter()
+  const pathname = usePathname()
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -41,7 +42,7 @@ export default function Header() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     if (searchQuery.trim()) {
-      router.push(`/search?q=${encodeURIComponent(searchQuery)}`)
+      window.location.href = `/search?q=${encodeURIComponent(searchQuery)}`
       setShowSearch(false)
       setSearchQuery("")
     }
@@ -60,7 +61,14 @@ export default function Header() {
           <div className="flex items-center min-w-0 flex-shrink-0">
             <Link href="/" className="flex items-center min-w-0">
               <div className="flex items-center gap-2 min-w-0">
-                <img src="RSN NEWS.jpg" alt="RSN Logo" className="h-12 w-12 object-contain rounded-full bg-white p-1 shadow-sm mr-1" />
+                <Image
+                  src="/RSN NEWS.jpg"
+                  alt="RSN Logo"
+                  width={48}
+                  height={48}
+                  className="h-12 w-12 object-contain rounded-full bg-white p-1 shadow-sm mr-1"
+                  priority
+                />
                 <span
                   className={cn("text-xl sm:text-2xl font-bold truncate", isScrolled ? "text-[#CC0000] dark:text-white" : "text-white")}
                 >
@@ -216,23 +224,35 @@ export default function Header() {
             <div className="flex items-center gap-1 flex-nowrap min-w-0">
               <Link
                 href="/"
-                className="px-3 py-2 text-sm font-medium rounded-md transition-colors hover:bg-white/10 text-white whitespace-nowrap"
+                className={cn(
+                  "px-3 py-2 text-sm font-medium rounded-md transition-colors hover:bg-white/10 text-white whitespace-nowrap",
+                  pathname === "/" ? "bg-white/20 font-bold" : ""
+                )}
+                aria-current={pathname === "/" ? "page" : undefined}
               >
-                <Home className="h-4 w-4 inline-block mr-1" />
+                <Home className="h-4 w-4 inline-block mr-1" aria-hidden="true" />
                 Home
               </Link>
               <Link
                 href="/trending"
-                className="px-3 py-2 text-sm font-medium rounded-md transition-colors hover:bg-white/10 text-white whitespace-nowrap"
+                className={cn(
+                  "px-3 py-2 text-sm font-medium rounded-md transition-colors hover:bg-white/10 text-white whitespace-nowrap",
+                  pathname === "/trending" ? "bg-white/20 font-bold" : ""
+                )}
+                aria-current={pathname === "/trending" ? "page" : undefined}
               >
-                <TrendingUp className="h-4 w-4 inline-block mr-1" />
+                <TrendingUp className="h-4 w-4 inline-block mr-1" aria-hidden="true" />
                 Trending
               </Link>
               <Link
                 href="/latest"
-                className="px-3 py-2 text-sm font-medium rounded-md transition-colors hover:bg-white/10 text-white whitespace-nowrap"
+                className={cn(
+                  "px-3 py-2 text-sm font-medium rounded-md transition-colors hover:bg-white/10 text-white whitespace-nowrap",
+                  pathname === "/latest" ? "bg-white/20 font-bold" : ""
+                )}
+                aria-current={pathname === "/latest" ? "page" : undefined}
               >
-                <Newspaper className="h-4 w-4 inline-block mr-1" />
+                <Newspaper className="h-4 w-4 inline-block mr-1" aria-hidden="true" />
                 Latest
               </Link>
               {/* Categories: scrollable on mobile */}
@@ -240,7 +260,11 @@ export default function Header() {
                 <Link
                   key={category.name}
                   href={category.href}
-                  className="px-3 py-2 text-sm font-medium rounded-md transition-colors hover:bg-white/10 text-white whitespace-nowrap"
+                  className={cn(
+                    "px-3 py-2 text-sm font-medium rounded-md transition-colors hover:bg-white/10 text-white whitespace-nowrap",
+                    pathname === category.href ? "bg-white/20 font-bold" : ""
+                  )}
+                  aria-current={pathname === category.href ? "page" : undefined}
                 >
                   {category.name}
                 </Link>
