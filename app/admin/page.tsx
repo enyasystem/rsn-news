@@ -15,6 +15,17 @@ interface DashboardStats {
 
 }
 
+// Professional Spinner component
+function Spinner() {
+  return (
+    <span
+      className="inline-block w-5 h-5 border-2 border-gray-300 border-t-indigo-600 rounded-full animate-spin align-middle"
+      role="status"
+      aria-label="Loading"
+    />
+  );
+}
+
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -43,7 +54,6 @@ export default function AdminDashboardPage() {
   return (
     <div className="min-h-screen bg-gray-100 font-sans">
       <div className="flex min-h-screen">
-       
         {/* Main Content */}
         <div className="flex-1 flex flex-col p-4 md:p-6 lg:p-8">
           {/* Top Bar */}
@@ -68,28 +78,44 @@ export default function AdminDashboardPage() {
           </div>
           {/* Stats Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <div className="bg-white p-4 rounded-lg shadow text-center">
+            <div
+              className="bg-white p-4 rounded-lg shadow text-center cursor-pointer hover:bg-indigo-50 transition"
+              title="View all news posts"
+              onClick={() => router.push("/admin/news")}
+            >
               <p className="text-gray-500">Total News Posts</p>
-              <h3 className="text-2xl font-bold">
-                {loading || !stats ? "--" : stats.postCount}
+              <h3 className="text-2xl font-bold min-h-[2rem] flex items-center justify-center">
+                {loading ? <Spinner /> : !stats ? "--" : stats.postCount}
               </h3>
             </div>
-            <div className="bg-white p-4 rounded-lg shadow text-center">
+            <div
+              className="bg-white p-4 rounded-lg shadow text-center cursor-pointer hover:bg-blue-50 transition"
+              title="View all categories"
+              onClick={() => router.push("/admin/categories")}
+            >
               <p className="text-gray-500">Categories</p>
-              <h3 className="text-2xl font-bold">
-                {loading || !stats ? "--" : stats.categoryCount}
+              <h3 className="text-2xl font-bold min-h-[2rem] flex items-center justify-center">
+                {loading ? <Spinner /> : !stats ? "--" : stats.categoryCount}
               </h3>
             </div>
-            <div className="bg-white p-4 rounded-lg shadow text-center">
+            <div
+              className="bg-white p-4 rounded-lg shadow text-center cursor-pointer hover:bg-teal-50 transition"
+              title="View all admins"
+              onClick={() => router.push("/admin/users")}
+            >
               <p className="text-gray-500">Admins</p>
-              <h3 className="text-2xl font-bold">
-                {loading || !stats ? "--" : stats.adminCount}
+              <h3 className="text-2xl font-bold min-h-[2rem] flex items-center justify-center">
+                {loading ? <Spinner /> : !stats ? "--" : stats.adminCount}
               </h3>
             </div>
-            <div className="bg-white p-4 rounded-lg shadow text-center">
+            <div
+              className="bg-white p-4 rounded-lg shadow text-center cursor-pointer hover:bg-gray-100 transition"
+              title="View recent posts"
+              onClick={() => router.push("/admin/news")}
+            >
               <p className="text-gray-500">Recent Posts</p>
-              <h3 className="text-2xl font-bold">
-                {loading || !stats ? "--" : stats.recentPosts.length}
+              <h3 className="text-2xl font-bold min-h-[2rem] flex items-center justify-center">
+                {loading ? <Spinner /> : !stats ? "--" : stats.recentPosts.length}
               </h3>
             </div>
           </div>
@@ -99,7 +125,10 @@ export default function AdminDashboardPage() {
             <div className="col-span-2 bg-white p-4 rounded shadow overflow-x-auto">
               <h2 className="text-xl font-bold mb-4">Recent News Posts</h2>
               {loading ? (
-                <div className="text-gray-400" aria-live="polite">Loading...</div>
+                <div className="flex justify-center items-center py-8" aria-live="polite">
+                  <Spinner />
+                  <span className="ml-2 text-gray-500">Loading...</span>
+                </div>
               ) : error ? (
                 <div className="text-red-600" aria-live="polite">{error}</div>
               ) : (Array.isArray(stats?.recentPosts) && stats.recentPosts.length === 0 ? (
@@ -134,6 +163,7 @@ export default function AdminDashboardPage() {
                 <div className="space-y-3">
                   <button
                     className="w-full bg-indigo-600 text-white py-2 px-4 rounded hover:bg-indigo-700 transition-colors font-semibold shadow-sm flex items-center justify-center"
+                    title="Add a new news post"
                     onClick={() => router.push("/admin/news")}
                   >
                     <span className="mr-2" role="img" aria-label="Add News">📝</span>
@@ -141,6 +171,7 @@ export default function AdminDashboardPage() {
                   </button>
                   <button
                     className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition-colors font-semibold shadow-sm flex items-center justify-center"
+                    title="Manage categories"
                     onClick={() => router.push("/admin/categories")}
                   >
                     <span className="mr-2" role="img" aria-label="Categories">🏷️</span>
@@ -148,6 +179,7 @@ export default function AdminDashboardPage() {
                   </button>
                   <button
                     className="w-full bg-teal-600 text-white py-2 px-4 rounded hover:bg-teal-700 transition-colors font-semibold shadow-sm flex items-center justify-center"
+                    title="View all admins"
                     onClick={() => router.push("/admin/users")}
                   >
                     <span className="mr-2" role="img" aria-label="Admins">👥</span>
@@ -155,6 +187,7 @@ export default function AdminDashboardPage() {
                   </button>
                   <button
                     className="w-full bg-gray-700 text-white py-2 px-4 rounded hover:bg-gray-800 transition-colors font-semibold shadow-sm flex items-center justify-center"
+                    title="Go to settings"
                     onClick={() => router.push("/admin/settings")}
                   >
                     <span className="mr-2" role="img" aria-label="Settings">⚙️</span>
