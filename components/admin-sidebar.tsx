@@ -14,7 +14,7 @@ import {
   SidebarProvider,
 } from "./ui/sidebar";
 import { useRouter } from "next/navigation";
-import { LogOut, Newspaper, List, Users, Settings } from "lucide-react";
+import { LogOut, Newspaper, List, Users, Settings, ExternalLink } from "lucide-react";
 import Image from "next/image";
 
 export default function AdminSidebar({ className = "" }: { className?: string }) {
@@ -69,6 +69,17 @@ export default function AdminSidebar({ className = "" }: { className?: string })
         </SidebarContent>
         <SidebarFooter>
           <SidebarMenu>
+            <SidebarMenuItem>
+              <a
+                href="/"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="View site as visitor"
+                className="flex items-center px-3 py-2 rounded text-indigo-700 border border-indigo-600 bg-white hover:bg-indigo-50 hover:text-indigo-900 font-semibold transition"
+              >
+                <ExternalLink className="mr-2" /> View Site
+              </a>
+            </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton
                 onClick={async () => {
