@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import {
   Sidebar,
   SidebarContent,
@@ -16,13 +16,22 @@ import {
 import { useRouter } from "next/navigation";
 import { LogOut, Newspaper, List, Users, Settings, ExternalLink } from "lucide-react";
 import Image from "next/image";
+import { SidebarVisibilityProvider, useSidebarVisibility } from "./SidebarVisibilityContext";
 
 export default function AdminSidebar({ className = "" }: { className?: string }) {
   const router = useRouter();
+  const { visible } = useSidebarVisibility();
 
+  // Add smooth transition for sidebar visibility
   return (
     <SidebarProvider>
-      <Sidebar className={className}>
+      <Sidebar
+        className={
+          `${className} transition-all duration-300 ease-in-out transform ${!visible ? "-translate-x-full md:translate-x-0 hidden" : "translate-x-0"}`
+        }
+        id="sidebar"
+        style={{ zIndex: 50 }}
+      >
         <SidebarHeader>
           <div className="flex items-center gap-2">
             <Image src="/RSN NEWS.jpg" alt="RSN News Logo" width={40} height={40} className="rounded-full bg-white p-1 shadow-sm" />
