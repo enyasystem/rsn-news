@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface DashboardStats {
   postCount: number;
@@ -18,6 +19,7 @@ export default function AdminDashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const router = useRouter();
 
   useEffect(() => {
     async function fetchStats() {
@@ -49,6 +51,7 @@ export default function AdminDashboardPage() {
             <div className="flex items-center space-x-4">
               <button
                 className="md:hidden text-2xl"
+                aria-label="Toggle sidebar menu"
                 onClick={() => {
                   const sidebar = document.getElementById("sidebar");
                   if (sidebar) sidebar.classList.toggle("hidden");
@@ -96,9 +99,11 @@ export default function AdminDashboardPage() {
             <div className="col-span-2 bg-white p-4 rounded shadow overflow-x-auto">
               <h2 className="text-xl font-bold mb-4">Recent News Posts</h2>
               {loading ? (
-                <div className="text-gray-400">Loading...</div>
+                <div className="text-gray-400" aria-live="polite">Loading...</div>
               ) : error ? (
-                <div className="text-red-600">{error}</div>
+                <div className="text-red-600" aria-live="polite">{error}</div>
+              ) : (Array.isArray(stats?.recentPosts) && stats.recentPosts.length === 0 ? (
+                <div className="text-gray-400 text-center py-8" aria-live="polite">No recent news posts found.</div>
               ) : (
                 <table className="w-full text-left border-t border-gray-200">
                   <thead className="text-gray-500 uppercase text-sm">
@@ -120,29 +125,41 @@ export default function AdminDashboardPage() {
                     ))}
                   </tbody>
                 </table>
-              )}
+              ))}
             </div>
             {/* Quick Actions */}
             <div className="bg-white p-4 rounded shadow flex flex-col justify-between">
               <div>
                 <h2 className="text-xl font-bold mb-4">Quick Actions</h2>
                 <div className="space-y-3">
-                  <button className="w-full bg-red-600 text-white py-2 px-4 rounded hover:bg-red-700">
-                    + Add News Post
+                  <button
+                    className="w-full bg-indigo-600 text-white py-2 px-4 rounded hover:bg-indigo-700 transition-colors font-semibold shadow-sm flex items-center justify-center"
+                    onClick={() => router.push("/admin/news")}
+                  >
+                    <span className="mr-2" role="img" aria-label="Add News">📝</span>
+                    Add News Post
                   </button>
-                  <button className="w-full bg-red-600 text-white py-2 px-4 rounded hover:bg-red-700">
-                    + Manage Categories
+                  <button
+                    className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition-colors font-semibold shadow-sm flex items-center justify-center"
+                    onClick={() => router.push("/admin/categories")}
+                  >
+                    <span className="mr-2" role="img" aria-label="Categories">🏷️</span>
+                    Manage Categories
                   </button>
-                  <button className="w-full bg-red-600 text-white py-2 px-4 rounded hover:bg-red-700">
-                    + View All Admins
+                  <button
+                    className="w-full bg-teal-600 text-white py-2 px-4 rounded hover:bg-teal-700 transition-colors font-semibold shadow-sm flex items-center justify-center"
+                    onClick={() => router.push("/admin/users")}
+                  >
+                    <span className="mr-2" role="img" aria-label="Admins">👥</span>
+                    View All Admins
                   </button>
-                  <button className="w-full bg-red-600 text-white py-2 px-4 rounded hover:bg-red-700">
-                    + Settings
+                  <button
+                    className="w-full bg-gray-700 text-white py-2 px-4 rounded hover:bg-gray-800 transition-colors font-semibold shadow-sm flex items-center justify-center"
+                    onClick={() => router.push("/admin/settings")}
+                  >
+                    <span className="mr-2" role="img" aria-label="Settings">⚙️</span>
+                    Settings
                   </button>
-                  {/* Debug: Quick Actions are not yet connected to routes or modals. Implement navigation or modal logic as needed. */}
-                  <p className="text-xs text-gray-500 mt-2">
-                    Debug: Quick Actions are not yet connected to routes or modals. Implement navigation or modal logic as needed.
-                  </p>
                 </div>
               </div>
             </div>
